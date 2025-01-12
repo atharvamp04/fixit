@@ -8,8 +8,8 @@ void main() async {
 
   // Initialize Supabase with your project details
   await Supabase.initialize(
-    url: 'https://siwidxwgojsyyenzaena.supabase.co', // Replace with your Supabase project URL
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpd2lkeHdnb2pzeXllbnphZW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY2MTY2NzksImV4cCI6MjA1MjE5MjY3OX0.s1uzCefy3VJC2DfNPdBeWWqmOm46KGXDZE9nYBfH3hY', // Replace with your Supabase anon key
+    url: 'https://siwidxwgojsyyenzaena.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpd2lkeHdnb2pzeXllbnphZW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY2MTY2NzksImV4cCI6MjA1MjE5MjY3OX0.s1uzCefy3VJC2DfNPdBeWWqmOm46KGXDZE9nYBfH3hY',
   );
 
   runApp(MyApp());
@@ -32,10 +32,34 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthChecker extends StatelessWidget {
+class AuthChecker extends StatefulWidget {
+  @override
+  _AuthCheckerState createState() => _AuthCheckerState();
+}
+
+class _AuthCheckerState extends State<AuthChecker> {
+  late Future<void> _initialization;
+
+  @override
+  void initState() {
+    super.initState();
+    // Delay the authentication check until Supabase is fully initialized.
+    _initialization = Future.value();
+
+  }
+
   @override
   Widget build(BuildContext context) {
-    final user = Supabase.instance.client.auth.currentUser;
-    return user == null ? LoginPage() : HomePage();
+    return FutureBuilder(
+      future: _initialization,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        final user = Supabase.instance.client.auth.currentUser;
+        return user == null ? LoginPage() : HomePage();
+      },
+    );
   }
 }
