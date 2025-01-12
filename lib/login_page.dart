@@ -9,20 +9,46 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false;
 
   Future<void> signIn() async {
-    final email = _emailController.text;
-    final password = _passwordController.text;
-    final response = await Supabase.instance.client.auth.signIn(
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please enter email and password')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final response = await Supabase.instance.client.auth.signInWithPassword(
       email: email,
       password: password,
     );
-    if (response.error == null) {
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (response.session != null && response.user != null) {
       Navigator.pushReplacementNamed(context, '/home');
     } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(response.error!.message)));
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //  // SnackBar(content: Text(response.message ?? 'Login failed')),
+      // );
     }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -43,7 +69,10 @@ class _LoginPageState extends State<LoginPage> {
               obscureText: true,
             ),
             SizedBox(height: 20),
-            ElevatedButton(onPressed: signIn, child: Text('Login')),
+            ElevatedButton(
+              onPressed: _isLoading ? null : signIn,
+              child: _isLoading ? CircularProgressIndicator() : Text('Login'),
+            ),
           ],
         ),
       ),
