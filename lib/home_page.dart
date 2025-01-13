@@ -1,11 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'chat_screen.dart';
+import 'history_screen.dart';
+import 'account_screen.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int _selectedIndex = 0;
+
   Future<void> signOut() async {
-    await Supabase.instance.client.auth.signOut();
+    // Your sign out logic here
     // Redirect to login page after signing out
   }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  final List<Widget> _widgetOptions = [
+    ChatScreen(),
+    HistoryScreen(),
+    AccountScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -19,10 +40,28 @@ class HomePage extends StatelessWidget {
               signOut();
               Navigator.pushReplacementNamed(context, '/');
             },
-          )
+          ),
         ],
       ),
-      body: Center(child: Text('Welcome to Home Page!')),
+      body: _widgetOptions.elementAt(_selectedIndex),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat, color: _selectedIndex == 0 ? Color(0xFF17CE92) : Colors.grey),
+            label: 'Chat',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history, color: _selectedIndex == 1 ? Color(0xFF17CE92) : Colors.grey),
+            label: 'History',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_circle, color: _selectedIndex == 2 ? Color(0xFF17CE92) : Colors.grey),
+            label: 'Account',
+          ),
+        ],
+      ),
     );
   }
 }
