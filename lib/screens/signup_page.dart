@@ -63,8 +63,8 @@ class _SignupPageState extends State<SignupPage> {
   // Google Sign-In Functionality
   Future<void> _nativeGoogleSignIn() async {
     // TODO: Replace these with your Google Client IDs
-    const webClientId = 'my-web.apps.googleusercontent.com';
-    const iosClientId = 'my-ios.apps.googleusercontent.com';
+    const webClientId = '420646018313-4iql2ugkb2s080g1cgbansvugmqnql1k.apps.googleusercontent.com';
+    const iosClientId = '420646018313-onbp2q23jm6f7j26ipp2nl1sgeassoki.apps.googleusercontent.com';
 
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
