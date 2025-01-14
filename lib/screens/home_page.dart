@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'chat_screen.dart';
 import 'history_screen.dart';
 import 'account_screen.dart';
+import '../services/auth_service.dart'; // Assuming AuthService is imported from your services directory
 
 class HomePage extends StatefulWidget {
   @override
@@ -11,9 +13,16 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
+  // AuthService instance
+  final AuthService _authService = AuthService(Supabase.instance.client);
+
   Future<void> signOut() async {
-    // Your sign out logic here
-    // Redirect to login page after signing out
+    try {
+      await _authService.signOut();
+      Navigator.pushReplacementNamed(context, '/login');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error signing out: $e')));
+    }
   }
 
   void _onItemTapped(int index) {
@@ -36,10 +45,7 @@ class _HomePageState extends State<HomePage> {
         actions: [
           IconButton(
             icon: Icon(Icons.logout),
-            onPressed: () {
-              signOut();
-              Navigator.pushReplacementNamed(context, '/');
-            },
+            onPressed: signOut,
           ),
         ],
       ),
@@ -49,15 +55,15 @@ class _HomePageState extends State<HomePage> {
         onTap: _onItemTapped,
         items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.chat, color: _selectedIndex == 0 ? Color(0xFF17CE92) : Colors.grey),
+            icon: Icon(Icons.chat),
             label: 'Chat',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.history, color: _selectedIndex == 1 ? Color(0xFF17CE92) : Colors.grey),
+            icon: Icon(Icons.history),
             label: 'History',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_circle, color: _selectedIndex == 2 ? Color(0xFF17CE92) : Colors.grey),
+            icon: Icon(Icons.account_circle),
             label: 'Account',
           ),
         ],
