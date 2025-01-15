@@ -7,15 +7,11 @@ import 'screens/signup_page.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    // Initialize Supabase with error handling
-    await Supabase.initialize(
-      url: const String.fromEnvironment('SUPABASE_URL'), // Use environment variables
-      anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),
-    );
-  } catch (e) {
-    debugPrint('Supabase initialization error: $e');
-  }
+  // Initialize Supabase (configuration remains untouched)
+  await Supabase.initialize(
+    url: 'https://siwidxwgojsyyenzaena.supabase.co', // Supabase URL
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpd2lkeHdnb2pzeXllbnphZW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY2MTY2NzksImV4cCI6MjA1MjE5MjY3OX0.s1uzCefy3VJC2DfNPdBeWWqmOm46KGXDZE9nYBfH3hY', // Supabase Anon Key
+  );
 
   runApp(MyApp());
 }
@@ -29,15 +25,9 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      initialRoute: '/',
+      // Initial route set to login
+      initialRoute: '/login',
       onGenerateRoute: _generateRoute,
-      onUnknownRoute: (settings) {
-        return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            body: Center(child: Text('404: Page Not Found')),
-          ),
-        );
-      },
     );
   }
 
@@ -52,9 +42,15 @@ class MyApp extends StatelessWidget {
       case '/signup':
         return MaterialPageRoute(builder: (_) => SignupPage());
       default:
+      // Fallback route for undefined routes
         return MaterialPageRoute(
           builder: (_) => Scaffold(
-            body: Center(child: Text('404: Page Not Found')),
+            body: Center(
+              child: Text(
+                '404: Page Not Found',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
           ),
         );
     }
@@ -71,7 +67,20 @@ class AuthChecker extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Scaffold(
+            body: Center(
+              child: Text(
+                'Error: ${snapshot.error}',
+                style: TextStyle(fontSize: 16, color: Colors.red),
+              ),
+            ),
           );
         }
 
@@ -82,7 +91,8 @@ class AuthChecker extends StatelessWidget {
           }
         }
 
-        return LoginPage(); // Navigate to login if not authenticated
+        // Navigate to login if not authenticated
+        return LoginPage();
       },
     );
   }
