@@ -32,7 +32,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   final List<Widget> _widgetOptions = [
-    ChatBotScreen(),
+    ChatScreen(),
     HistoryScreen(),
     AccountScreen(),
   ];

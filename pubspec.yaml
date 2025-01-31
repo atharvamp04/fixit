@@ -16,8 +16,8 @@ dependencies:
   google_sign_in: ^5.0.0
   uuid: ^3.0.7
   cupertino_icons: ^1.0.8
-  dialogflow_flutter: ^1.0.0
-  http: ^0.13.3
+#  dialogflow_flutter: ^1.0.0
+  http: ^1.0.0
   bubble: ^1.2.1
 
 dev_dependencies:
@@ -46,6 +46,7 @@ flutter_icons:
   remove_alpha_ios: true
 
 flutter:
-
+#  assets:
+#    - assets/newagent-9aew-094a12e96d99.json
   uses-material-design: true
 

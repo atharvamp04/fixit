@@ -1,98 +1,32 @@
-import 'package:bubble/bubble.dart';
-import 'package:dialogflow_flutter/googleAuth.dart';
 import 'package:flutter/material.dart';
-import 'package:dialogflow_flutter/dialogflowFlutter.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/wit_ai_service.dart';
 
-class ChatBotScreen extends StatefulWidget {
+class ChatScreen extends StatefulWidget {
   @override
-  _ChatBotScreenState createState() => _ChatBotScreenState();
+  _ChatScreenState createState() => _ChatScreenState();
 }
 
-class _ChatBotScreenState extends State<ChatBotScreen> {
-  final messageInsert = TextEditingController();
-  List<Map<String, dynamic>> messages = [];
+class _ChatScreenState extends State<ChatScreen> {
+  final TextEditingController _controller = TextEditingController();
+  final WitAIService _witAIService = WitAIService();
+  List<Map<String, String>> messages = [];
+  bool isLoading = false;
 
-  void handleQuery(String query) async {
-    try {
-      AuthGoogle authGoogle = await AuthGoogle(fileJson: "assets/newagent-9aew-094a12e96d99.json").build();
-      DialogFlow dialogflow = DialogFlow(authGoogle: authGoogle, language: "en");
-      AIResponse aiResponse = await dialogflow.detectIntent(query);
+  void _sendMessage() async {
+    if (_controller.text.isNotEmpty) {
+      String userMessage = _controller.text;
 
-      var responseList = aiResponse.getListMessage();
-      if (responseList != null && responseList.isNotEmpty) {
-        var messageData = responseList[0]["text"];
-        if (messageData != null && messageData["text"] != null) {
-          String message = messageData["text"][0].toString();
-          setState(() {
-            messages.insert(0, {"data": 0, "message": message});
-          });
-
-          // Extract the product name and check stock availability
-          String productName = extractProductName(message);
-          if (productName.isNotEmpty) {
-            await fetchStockAvailability(productName);
-          }
-        } else {
-          setState(() {
-            messages.insert(0, {"data": 0, "message": "Sorry, I didn't understand that."});
-          });
-        }
-      } else {
-        setState(() {
-          messages.insert(0, {"data": 0, "message": "No response from the bot."});
-        });
-      }
-    } catch (e) {
-      print("Error in handleQuery: $e");
       setState(() {
-        messages.insert(0, {"data": 0, "message": "An error occurred. Please try again."});
+        messages.add({"sender": "user", "text": userMessage});
+        isLoading = true;
       });
-    }
-  }
 
-  String extractProductName(String message) {
-    // Example of simple keyword extraction; this can be enhanced as needed
-    List<String> productKeywords = ["laptop", "phone", "headphone"]; // Add all relevant product keywords
-    for (String keyword in productKeywords) {
-      if (message.toLowerCase().contains(keyword.toLowerCase())) {
-        return keyword;
-      }
-    }
-    return "";
-  }
+      final response = await _witAIService.processMessage(userMessage);
 
-  Future<void> fetchStockAvailability(String productName) async {
-    try {
-      final response = await Supabase.instance.client
-          .from('stock')
-          .select('stock_quantity')
-          .eq('product_name', productName)
-          .single();
-
-      if (response != null) {
-        int stockQuantity = response['stock_quantity'] ?? 0;
-        setState(() {
-          messages.insert(0, {
-            "data": 0,
-            "message": "The stock for $productName is $stockQuantity units."
-          });
-        });
-      } else {
-        setState(() {
-          messages.insert(0, {
-            "data": 0,
-            "message": "Sorry, we couldn't find stock information for $productName."
-          });
-        });
-      }
-    } catch (error) {
-      print("Error fetching stock: $error");
       setState(() {
-        messages.insert(0, {
-          "data": 0,
-          "message": "An error occurred while fetching stock information."
-        });
+        messages.add({"sender": "bot", "text": response});
+        isLoading = false;
+        _controller.clear();
       });
     }
   }
@@ -101,92 +35,113 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        centerTitle: true,
-        toolbarHeight: 70,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(30),
-            bottomRight: Radius.circular(30),
+        backgroundColor: Color(0xFF17CE92),
+        title: Text(
+          "FixIT",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.white, // Set text color to white
           ),
         ),
-        elevation: 10,
-        title: Text("DialogFlow Chatbot"),
+        centerTitle: true,
       ),
-      body: Container(
-        child: Column(
-          children: <Widget>[
-            Flexible(
-              child: ListView.builder(
-                reverse: true,
-                itemCount: messages.length,
-                itemBuilder: (context, index) => chat(messages[index]["message"].toString(), messages[index]["data"]),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              itemCount: messages.length,
+              itemBuilder: (context, index) {
+                return ChatBubble(
+                  text: messages[index]["text"]!,
+                  isUser: messages[index]["sender"] == "user",
+                );
+              },
+            ),
+          ),
+          if (isLoading)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: CircularProgressIndicator(
+                color: Color(0xFF17CE92),
               ),
             ),
-            Divider(height: 6.0),
-            Container(
-              padding: EdgeInsets.only(left: 15.0, right: 15.0, bottom: 20),
-              margin: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Row(
-                children: <Widget>[
-                  Flexible(
-                    child: TextField(
-                      controller: messageInsert,
-                      decoration: InputDecoration.collapsed(
-                          hintText: "Send your message", hintStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.0)),
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    style: TextStyle(fontSize: 16),
+                    decoration: InputDecoration(
+                      hintText: "Type your message...",
+                      hintStyle: TextStyle(color: Colors.grey),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: BorderSide(color: Colors.grey, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: BorderSide(color: Color(0xFF17CE92), width: 2),
+                      ),
                     ),
                   ),
-                  Container(
-                    margin: EdgeInsets.symmetric(horizontal: 4.0),
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.send,
-                        size: 30.0,
-                      ),
-                      onPressed: () {
-                        if (messageInsert.text.isEmpty) {
-                          print("empty message");
-                        } else {
-                          setState(() {
-                            messages.insert(0, {"data": 1, "message": messageInsert.text});
-                          });
-                          handleQuery(messageInsert.text);
-                          messageInsert.clear();
-                        }
-                      },
-                    ),
-                  )
-                ],
-              ),
+                ),
+                SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(Icons.send, color: Color(0xFF17CE92)),
+                  onPressed: _sendMessage,
+                ),
+              ],
             ),
-            SizedBox(height: 15.0)
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+}
 
-  Widget chat(String message, int data) {
-    return Padding(
-      padding: EdgeInsets.all(10.0),
-      child: Bubble(
-        radius: Radius.circular(15.0),
-        color: data == 0 ? Colors.blue : Colors.orangeAccent,
-        elevation: 0.0,
-        alignment: data == 0 ? Alignment.topLeft : Alignment.topRight,
-        nip: data == 0 ? BubbleNip.leftBottom : BubbleNip.rightTop,
-        child: Padding(
-          padding: EdgeInsets.all(2.0),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              SizedBox(width: 10.0),
-              Flexible(
-                child: Text(
-                  message,
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
+class ChatBubble extends StatelessWidget {
+  final String text;
+  final bool isUser;
+
+  ChatBubble({required this.text, required this.isUser});
+
+  @override
+  Widget build(BuildContext context) {
+    final backgroundColor = isUser ? Color(0xFF17CE92) : Colors.grey[200];
+    final textColor = backgroundColor == Color(0xFF17CE92) ? Colors.white : Colors.black87;
+
+    return Align(
+      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: EdgeInsets.symmetric(vertical: 6),
+        padding: EdgeInsets.all(14),
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(16),
+            topRight: Radius.circular(16),
+            bottomLeft: isUser ? Radius.circular(16) : Radius.circular(0),
+            bottomRight: isUser ? Radius.circular(0) : Radius.circular(16),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 6,
+              offset: Offset(2, 2),
+            ),
+          ],
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 15,
+            color: textColor,
           ),
         ),
       ),
