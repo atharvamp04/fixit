@@ -31,7 +31,7 @@ class WitAIService {
         Map<String, dynamic> entities = data['entities'] ?? {};
 
         // Check if the intent is related to product availability and process accordingly
-        if (intent == "product_availability") {
+        if (intent == "product_query") {
           return await _processProductAvailability(entities);
         }
 
@@ -41,6 +41,7 @@ class WitAIService {
         return "Sorry, something went wrong while processing your request.";
       }
     } catch (e) {
+      print("Error: $e");
       return "Error: Unable to process your request. Please check your internet connection.";
     }
   }
@@ -49,29 +50,25 @@ class WitAIService {
   Future<String> _processProductAvailability(Map<String, dynamic> entities) async {
     print("Entities received: $entities"); // Debugging entities
 
-    // Check for the key "product_name:product_name" since that's what the log shows.
-    if (entities.containsKey("product_name:product_name")) {
-      var productEntity = entities["product_name:product_name"];
-      print("Found key 'product_name:product_name'");
+    // Check for the key "product_code:product_code" since we're now using Product Code.
+    if (entities.containsKey("product_code:product_code")) {
+      var productEntity = entities["product_code:product_code"];
+      print("Found key 'product_code:product_code'");
 
       // Check if productEntity is a List and not empty
       if (productEntity is List && productEntity.isNotEmpty) {
-        String productName = productEntity[0]["value"];
-        print("Extracted product name: $productName"); // This should now print "Motor Controller"
-        return await _checkProductAvailability(productName); // Query Supabase with the extracted value
+        String productCode = productEntity[0]["value"];
+        print("Extracted product code: $productCode"); // This should now print the product code
+        return await _checkProductAvailability(productCode); // Query Supabase with the extracted value
       } else {
         print("productEntity is not a List or is empty.");
       }
     } else {
-      print("No 'product_name:product_name' key found in entities.");
+      print("No 'product_code:product_code' key found in entities.");
     }
 
-    return "Could you please specify the product name?";
+    return "Could you please provide the product code?";
   }
-
-
-
-
 
   /// Generates a bot response based on detected intent
   Future<String> _generateBotResponse(String intent, Map<String, dynamic> entities) async {
@@ -87,40 +84,40 @@ class WitAIService {
     }
   }
 
-  /// Checks the product availability from Supabase database
-  Future<String> _checkProductAvailability(String productName) async {
+  /// Checks the product availability from Supabase database based on Product Code
+  /// Fetches and displays all products from the database
+  /// Checks the product availability from Supabase database based on Product Code
+  Future<String> _checkProductAvailability(String productCode) async {
     try {
-      print("🔍 Searching for product: $productName");
+      print("🔍 Searching for product with Product Code: $productCode");
 
-      // Print the product name here to ensure it's not empty or malformed
-      if (productName.isEmpty) {
-        return "Product name is empty or malformed!";
+      if (productCode.isEmpty) {
+        return "Product code is empty or malformed!";
       }
 
-      final response = await supabase
-          .from('products-A')
+      // Fetch all matching products
+      final List<dynamic> response = await supabase
+          .from('products')
           .select('*')  // Fetch all columns
-          .ilike('product_name', '%$productName%') // Use the productName variable
-          .limit(1)
-          .maybeSingle();
+          .eq('Product Code', productCode); // Exact match for product code
 
+      print("📊 Supabase response: $response");
 
-
-
-      print("📊 Supabase response: $response");  // Check what response we get from Supabase
-
-      if (response != null && response.isNotEmpty) {
-        int stock = response['stock'];
-        int price = response['price'];
-
-        if (stock > 0) {
-          return "Yes, $productName is available! 🏷️ Price: ₹$price. 📦 Stock: $stock units.";
-        } else {
-          return "Sorry, $productName is currently out of stock.";
-        }
-      } else {
-        return "Sorry, we couldn't find any information about $productName.";
+      // If no products were found
+      if (response.isEmpty) {
+        return "Sorry, no product found with code $productCode.";
       }
+
+      // Build response for multiple products
+      List<String> productDetails = response.map((product) {
+        String productName = product['Product Description'];
+        int stock = product['Quantity On Hand'] ?? 0;
+        int price = product['Product Price'] ?? 0;
+
+        return "📦 **$productName** - ₹$price, Stock: $stock units";
+      }).toList();
+
+      return productDetails.join("\n");
     } catch (e) {
       print("❌ Supabase error: $e");
       return "Error fetching product details. Please try again later.";
@@ -129,4 +126,3 @@ class WitAIService {
 
 
 }
-
