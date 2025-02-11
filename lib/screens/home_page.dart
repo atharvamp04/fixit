@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'chat_screen.dart';
 import 'history_screen.dart';
-import 'account_screen.dart';
+import 'profile_screen.dart';
 import '../services/auth_service.dart'; // Assuming AuthService is imported from your services directory
 
 class HomePage extends StatefulWidget {
@@ -34,7 +34,7 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _widgetOptions = [
     ChatScreen(sessionId: '',),
     HistoryScreen(),
-    AccountScreen(),
+    ProfileScreen(),  // New profile page integrated here.
   ];
 
   @override
@@ -64,7 +64,7 @@ class _HomePageState extends State<HomePage> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.account_circle),
-            label: 'Account',
+            label: 'Profile',
           ),
         ],
       ),

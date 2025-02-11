@@ -113,11 +113,17 @@ class WitAIService {
         String productName = product['Product Description'] ?? 'N/A';
         int stock = product['Quantity On Hand'] ?? 0;
         int price = product['Product Price'] ?? 0;
+        String locationName = product['Location Name'];
 
+<<<<<<< Updated upstream
         return "📦 **$productName**\n"
             "💰 **Price:** ₹$price\n"
             "📊 **Stock:** $stock units";
       }
+=======
+        return "📦 **$productName** - ₹$price, Stock: $stock units, **$locationName**";
+      }).toList();
+>>>>>>> Stashed changes
 
       // Build table format for multiple products
       String tableHeader = "📦 **Available Products**\n"

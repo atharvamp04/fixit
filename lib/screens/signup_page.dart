@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:fixit/services/auth_service.dart';
 
 class SignupPage extends StatefulWidget {
+  const SignupPage({Key? key}) : super(key: key);
+
   @override
   _SignupPageState createState() => _SignupPageState();
 }
@@ -12,25 +14,28 @@ class _SignupPageState extends State<SignupPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _fullNameController = TextEditingController();
+  final _mobileNumberController = TextEditingController();
+  final _genderController = TextEditingController();
+
   bool _isLoading = false;
 
-  // Focus nodes to track focus state
-  final _emailFocusNode = FocusNode();
-  final _passwordFocusNode = FocusNode();
-  final _fullNameFocusNode = FocusNode();
-
-  // AuthService instance
   final AuthService _authService = AuthService(Supabase.instance.client);
 
-  // SignUp with Email and Password
+  // Sign up with Email and Password
   Future<void> signUp() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final fullName = _fullNameController.text.trim();
+    final mobileNumber = _mobileNumberController.text.trim();
+    final gender = _genderController.text.trim();
 
-    if (email.isEmpty || password.isEmpty || fullName.isEmpty) {
+    if (email.isEmpty ||
+        password.isEmpty ||
+        fullName.isEmpty ||
+        mobileNumber.isEmpty ||
+        gender.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please fill in all fields')),
+        const SnackBar(content: Text('Please fill in all fields')),
       );
       return;
     }
@@ -40,18 +45,25 @@ class _SignupPageState extends State<SignupPage> {
     });
 
     try {
-      final user = await _authService.signUpWithEmailPassword(email, password);
+      final user = await _authService.signUpWithEmailPassword(
+        email,
+        password,
+        fullName,
+        mobileNumber,
+        gender,
+      );
 
       if (user != null) {
+        // Navigate to home screen after successful signup
         Navigator.pushReplacementNamed(context, '/home');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Signup failed')),
+          const SnackBar(content: Text('Signup failed')),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error during sign-up: $e')),
+        SnackBar(content: Text('Error during signup: $e')),
       );
     } finally {
       setState(() {
@@ -62,9 +74,10 @@ class _SignupPageState extends State<SignupPage> {
 
   // Google Sign-In Functionality
   Future<void> _nativeGoogleSignIn() async {
-    // TODO: Replace these with your Google Client IDs
-    const webClientId = '420646018313-4iql2ugkb2s080g1cgbansvugmqnql1k.apps.googleusercontent.com';
-    const iosClientId = '420646018313-onbp2q23jm6f7j26ipp2nl1sgeassoki.apps.googleusercontent.com';
+    const webClientId =
+        '420646018313-4iql2ugkb2s080g1cgbansvugmqnql1k.apps.googleusercontent.com';
+    const iosClientId =
+        '420646018313-onbp2q23jm6f7j26ipp2nl1sgeassoki.apps.googleusercontent.com';
 
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
@@ -73,7 +86,7 @@ class _SignupPageState extends State<SignupPage> {
       );
 
       final googleUser = await googleSignIn.signIn();
-      if (googleUser == null) return; // User canceled sign-in
+      if (googleUser == null) return;
 
       final googleAuth = await googleUser.authentication;
       final accessToken = googleAuth.accessToken;
@@ -90,10 +103,29 @@ class _SignupPageState extends State<SignupPage> {
       );
 
       if (response.session != null) {
+        final userId = response.user?.id;
+        if (userId == null) throw 'User ID is null after Google Sign-In';
+
+        // Create the profile for Google sign-in users
+        final data = await Supabase.instance.client
+            .from('profiles')
+            .upsert({
+          'id': userId,
+          'full_name': googleUser.displayName ?? '',
+          'email': googleUser.email,
+          'mobile_number': '',
+          'gender': '',
+        })
+            .select();
+
+        if (data is! List) {
+          throw Exception('Profile creation failed: $data');
+        }
+
         Navigator.pushReplacementNamed(context, '/home');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Google Sign-In failed')),
+          const SnackBar(content: Text('Google Sign-In failed')),
         );
       }
     } catch (e) {
@@ -108,124 +140,112 @@ class _SignupPageState extends State<SignupPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _fullNameController.dispose();
-    _emailFocusNode.dispose();
-    _passwordFocusNode.dispose();
-    _fullNameFocusNode.dispose();
+    _mobileNumberController.dispose();
+    _genderController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Sign Up')),
+      appBar: AppBar(title: const Text('Sign Up')),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 40), // Added padding at the top for better UI
-            Text(
-              'Create an account',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
-            TextField(
-              controller: _emailController,
-              focusNode: _emailFocusNode,
-              decoration: InputDecoration(
-                labelText: 'Email',
-                hintText: 'Enter your email',
-                suffixIcon: Icon(
-                  Icons.email,
-                  color:
-                  _emailFocusNode.hasFocus ? Color(0xFF17CE92) : Colors.grey,
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF17CE92)),
-                ),
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 40),
+              const Text(
+                'Create an account',
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
-            ),
-            SizedBox(height: 10),
-            TextField(
-              controller: _passwordController,
-              focusNode: _passwordFocusNode,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                hintText: 'Enter your password',
-                suffixIcon: Icon(
-                  Icons.lock,
-                  color: _passwordFocusNode.hasFocus
-                      ? Color(0xFF17CE92)
-                      : Colors.grey,
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF17CE92)),
-                ),
+              const SizedBox(height: 20),
+              _buildTextField(_emailController, 'Email', Icons.email),
+              const SizedBox(height: 10),
+              _buildTextField(
+                _passwordController,
+                'Password',
+                Icons.lock,
+                obscureText: true,
               ),
-              obscureText: true,
-            ),
-            SizedBox(height: 10),
-            TextField(
-              controller: _fullNameController,
-              focusNode: _fullNameFocusNode,
-              decoration: InputDecoration(
-                labelText: 'Full Name',
-                hintText: 'Enter your full name',
-                suffixIcon: Icon(
-                  Icons.person,
-                  color:
-                  _fullNameFocusNode.hasFocus ? Color(0xFF17CE92) : Colors.grey,
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF17CE92)),
-                ),
+              const SizedBox(height: 10),
+              _buildTextField(_fullNameController, 'Full Name', Icons.person),
+              const SizedBox(height: 10),
+              _buildTextField(
+                  _mobileNumberController, 'Mobile Number', Icons.phone),
+              const SizedBox(height: 10),
+              _buildTextField(_genderController, 'Gender', Icons.accessibility),
+              const SizedBox(height: 20),
+              _buildSignupButton(),
+              const SizedBox(height: 10),
+              _buildGoogleSignupButton(),
+              const SizedBox(height: 10),
+              TextButton(
+                onPressed: () =>
+                    Navigator.pushReplacementNamed(context, '/login'),
+                child: const Text('Already have an account? Login'),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label,
+      IconData icon, {bool obscureText = false}) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: 'Enter your $label',
+        suffixIcon: Icon(icon, color: Colors.grey),
+        focusedBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(color: Color(0xFF17CE92)),
+        ),
+      ),
+      obscureText: obscureText,
+    );
+  }
+
+  Widget _buildSignupButton() {
+    return Center(
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: _isLoading ? null : signUp,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF17CE92),
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30.0),
             ),
-            SizedBox(height: 20),
-            Center(
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : signUp,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF17CE92),
-                    padding: EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30.0),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? CircularProgressIndicator(color: Colors.white)
-                      : Text('Sign Up', style: TextStyle(color: Colors.white)),
-                ),
-              ),
+          ),
+          child: _isLoading
+              ? const CircularProgressIndicator(color: Colors.white)
+              : const Text('Sign Up',
+              style: TextStyle(color: Colors.white)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoogleSignupButton() {
+    return Center(
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: _nativeGoogleSignIn,
+          icon: const Icon(Icons.login),
+          label: const Text('Sign Up with Google'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.redAccent,
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30.0),
             ),
-            SizedBox(height: 10),
-            Center(
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _nativeGoogleSignIn,
-                  icon: Icon(Icons.login),
-                  label: Text('Sign Up with Google'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    padding: EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30.0),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 10),
-            TextButton(
-              onPressed: () {
-                Navigator.pushReplacementNamed(context, '/login');
-              },
-              child: Text('Already have an account? Login'),
-            ),
-          ],
+          ),
         ),
       ),
     );
