@@ -98,7 +98,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF17CE92),
+        backgroundColor: const Color(0xFFF8F13F),
         title: const Text(
           "FixIT",
           style: TextStyle(
@@ -133,7 +133,7 @@ class _ChatScreenState extends State<ChatScreen> {
             const Padding(
               padding: EdgeInsets.all(8.0),
               child: CircularProgressIndicator(
-                color: Color(0xFF17CE92),
+                color: Color(0xFFEFE516),
               ),
             ),
           Padding(
@@ -154,7 +154,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(25),
-                        borderSide: const BorderSide(color: Color(0xFF17CE92), width: 2),
+                        borderSide: const BorderSide(color: Color(0xFFEFE516), width: 2),
                       ),
                     ),
                     onSubmitted: (value) => _sendMessage(),
@@ -162,7 +162,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(Icons.send, color: Color(0xFF17CE92)),
+                  icon: const Icon(Icons.send, color: Color(0xFFEFE516)),
                   onPressed: _sendMessage,
                 ),
               ],
@@ -182,7 +182,7 @@ class ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = isUser ? const Color(0xFF17CE92) : Colors.grey[200];
+    final backgroundColor = isUser ? const Color(0xFFEFE516) : Colors.grey[200];
     final textColor = isUser ? Colors.white : Colors.black87;
 
     return Align(
