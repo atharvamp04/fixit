@@ -85,14 +85,13 @@ class WitAIService {
   }
 
   /// Checks the product availability from Supabase database based on Product Code
-  /// Fetches and displays all products from the database
   /// Checks the product availability from Supabase database based on Product Code
   Future<String> _checkProductAvailability(String productCode) async {
     try {
       print("🔍 Searching for product with Product Code: $productCode");
 
       if (productCode.isEmpty) {
-        return "Product code is empty or malformed!";
+        return "❌ Product code is empty or malformed!";
       }
 
       // Fetch all matching products
@@ -105,19 +104,36 @@ class WitAIService {
 
       // If no products were found
       if (response.isEmpty) {
-        return "Sorry, no product found with code $productCode.";
+        return "❌ Sorry, no product found with code **$productCode**.";
       }
 
-      // Build response for multiple products
-      List<String> productDetails = response.map((product) {
-        String productName = product['Product Description'];
+      // If only one product is found, return a detailed response
+      if (response.length == 1) {
+        var product = response[0];
+        String productName = product['Product Description'] ?? 'N/A';
         int stock = product['Quantity On Hand'] ?? 0;
         int price = product['Product Price'] ?? 0;
 
-        return "📦 **$productName** - ₹$price, Stock: $stock units";
-      }).toList();
+        return "📦 **$productName**\n"
+            "💰 **Price:** ₹$price\n"
+            "📊 **Stock:** $stock units";
+      }
 
-      return productDetails.join("\n");
+      // Build table format for multiple products
+      String tableHeader = "📦 **Available Products**\n"
+          "--------------------------------------\n"
+          "| Product Name              | Price  | Stock |\n"
+          "|---------------------------|--------|-------|\n";
+
+      String tableRows = response.map((product) {
+        String productName = (product['Product Description'] ?? 'N/A').padRight(25);
+        String price = ("₹" + (product['Product Price']?.toString() ?? '0')).padRight(7);
+        String stock = (product['Quantity On Hand']?.toString() ?? '0').padRight(5);
+
+        return "| $productName | $price | $stock |";
+      }).join("\n");
+
+      return "$tableHeader$tableRows\n--------------------------------------";
     } catch (e) {
       print("❌ Supabase error: $e");
       return "Error fetching product details. Please try again later.";
