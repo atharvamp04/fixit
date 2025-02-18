@@ -31,42 +31,71 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // List of screens
   final List<Widget> _widgetOptions = [
-    ChatScreen(sessionId: '',),
+    ChatScreen(sessionId: ''),
     HistoryScreen(),
-    ProfileScreen(),  // New profile page integrated here.
+    ProfileScreen(),
+  ];
+
+  // List of titles for the AppBar
+  final List<String> _appBarTitles = [
+    'Chat',
+    'History',
+    'Profile',
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Home'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: signOut,
+    return WillPopScope(
+      onWillPop: () async {
+        if (_selectedIndex > 0) {
+          setState(() {
+            _selectedIndex = 0; // Navigate back to Chat screen
+          });
+          return false; // Prevent app from closing
+        }
+        return true; // Allow default behavior (exit app)
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_appBarTitles[_selectedIndex]), // Dynamic title
+          leading: _selectedIndex == 0
+              ? null // Hide back button on Chat screen
+              : IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () {
+              setState(() {
+                _selectedIndex = 0; // Navigate back to Chat
+              });
+            },
           ),
-        ],
-      ),
-      body: _widgetOptions.elementAt(_selectedIndex),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
-            label: 'Chat',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'History',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_circle),
-            label: 'Profile',
-          ),
-        ],
+          actions: [
+            IconButton(
+              icon: Icon(Icons.logout),
+              onPressed: signOut,
+            ),
+          ],
+        ),
+        body: _widgetOptions[_selectedIndex],
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          items: [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.chat),
+              label: 'Chat',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.history),
+              label: 'History',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.account_circle),
+              label: 'Profile',
+            ),
+          ],
+        ),
       ),
     );
   }
