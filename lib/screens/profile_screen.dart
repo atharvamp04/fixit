@@ -23,7 +23,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Additional Field: Social Links
   String socialLinks = "";
 
-  // Controllers for text fields are initialized immediately.
+  // Controllers for text fields.
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -151,6 +151,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       _isLoading = false;
     });
+  }
+
+  /// Logout the user from Supabase and navigate to the login screen.
+  Future<void> _logout() async {
+    try {
+      await supabase.auth.signOut();
+      // Navigate to the login page (ensure your login route is correctly set up).
+      Navigator.pushReplacementNamed(context, '/login');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error logging out: $e')),
+      );
+    }
   }
 
   /// Use image_picker to pick an image and upload it to Supabase Storage.
@@ -328,7 +341,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Gender field as a text field instead of a dropdown.
+              // Gender field as a text field.
               TextFormField(
                 controller: _genderController,
                 decoration: const InputDecoration(
@@ -355,6 +368,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ElevatedButton(
                 onPressed: _updateProfile,
                 child: const Text("Update Profile"),
+              ),
+              const SizedBox(height: 10),
+              // Logout Button.
+              ElevatedButton(
+                onPressed: _logout,
+                child: const Text("Logout"),
               ),
             ],
           ),

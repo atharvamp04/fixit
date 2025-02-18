@@ -17,6 +17,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final WitAIService _witAIService = WitAIService();
   List<Map<String, String>> messages = [];
   bool isLoading = false;
+  final ScrollController _scrollController = ScrollController(); // Added scroll controller
 
   @override
   void initState() {
@@ -24,6 +25,25 @@ class _ChatScreenState extends State<ChatScreen> {
     _loadChatHistory();
   }
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // Utility method to scroll to the bottom of the chat.
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  // Load chat history for the current session from SharedPreferences.
   void _loadChatHistory() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? chatHistory = prefs.getString(widget.sessionId); // Load specific session
@@ -39,18 +59,22 @@ class _ChatScreenState extends State<ChatScreen> {
             };
           }).toList();
         });
+        // Scroll to bottom after chat history is loaded.
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
       } catch (e) {
         print("Error loading chat history: $e");
       }
     }
   }
 
+  // Save the current chat history to SharedPreferences for this session.
   void _saveChatHistory() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String chatHistory = jsonEncode(messages);
     await prefs.setString(widget.sessionId, chatHistory); // Save session-specific chat
   }
 
+  // Send a message: adds the user message, processes it via Wit AI, then shows the response.
   void _sendMessage() async {
     if (_controller.text.trim().isEmpty) return;
 
@@ -61,34 +85,41 @@ class _ChatScreenState extends State<ChatScreen> {
       messages.add({"sender": "user", "text": userMessage});
       isLoading = true;
     });
+    // Scroll to the bottom after adding the user message.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
 
     try {
       final response = await _witAIService.processMessage(userMessage);
       setState(() {
         messages.add({"sender": "bot", "text": response});
       });
+      // Scroll to the bottom after receiving the bot's reply.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
     } catch (error) {
       setState(() {
         messages.add({"sender": "bot", "text": "Sorry, I couldn't process that."});
       });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
     } finally {
       setState(() {
         isLoading = false;
       });
-
-      _saveChatHistory(); // Save chat history after message
+      _saveChatHistory(); // Save chat history after processing the message
     }
   }
 
+  // Start a new chat session.
+  // Using Navigator.push adds the new ChatScreen on top of the current one,
+  // ensuring that the new chat screen gets its own Scaffold (with an AppBar and a back button).
   void _startNewChat() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String newSessionId = DateTime.now().millisecondsSinceEpoch.toString();
 
-    // Store the previous session in history
+    // Store the previous session's chat history.
     await prefs.setString(widget.sessionId, jsonEncode(messages));
 
-    // Navigate to a new chat session
-    Navigator.pushReplacement(
+    // Navigate to a new chat session.
+    Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => ChatScreen(sessionId: newSessionId)),
     );
@@ -97,6 +128,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Each ChatScreen has its own Scaffold with an AppBar.
       appBar: AppBar(
         backgroundColor: const Color(0xFFF8F13F),
         title: const Text(
@@ -108,17 +140,20 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
         centerTitle: true,
+        // The new chat button is provided in the AppBar's actions.
         actions: [
           IconButton(
             icon: const Icon(Icons.add_comment, color: Colors.white),
-            onPressed: _startNewChat, // New chat button
+            onPressed: _startNewChat,
           ),
         ],
       ),
       body: Column(
         children: [
+          // Chat messages list.
           Expanded(
             child: ListView.builder(
+              controller: _scrollController, // Attach scroll controller here.
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               itemCount: messages.length,
               itemBuilder: (context, index) {
@@ -129,6 +164,7 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
+          // Loading indicator while processing a message.
           if (isLoading)
             const Padding(
               padding: EdgeInsets.all(8.0),
@@ -136,6 +172,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 color: Color(0xFFEFE516),
               ),
             ),
+          // Input field and send button.
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: Row(

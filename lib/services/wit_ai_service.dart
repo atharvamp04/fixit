@@ -3,14 +3,16 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class WitAIService {
-  final String apiToken = "JF4FVJ6I4LCVK776BGTDRU6OV6ZW6GNO"; // Replace with your Wit.ai token
+  // Replace with your secure Wit.ai Server Access Token.
+  final String apiToken = "JF4FVJ6I4LCVK776BGTDRU6OV6ZW6GNO";
 
-  // Using the global SupabaseClient initialized in main.dart
-  final SupabaseClient supabase = Supabase.instance.client; // Access the global Supabase client
+  // Supabase client (ensure it’s initialized in main.dart)
+  final SupabaseClient supabase = Supabase.instance.client;
 
-  /// Processes the user's message using Wit.ai
+  /// Processes the user's message using Wit.ai.
   Future<String> processMessage(String message) async {
-    final String url = "https://api.wit.ai/message?v=20230124&q=${Uri.encodeComponent(message)}";
+    final String url =
+        "https://api.wit.ai/message?v=20230124&q=${Uri.encodeComponent(message)}";
 
     try {
       final response = await http.get(
@@ -24,19 +26,26 @@ class WitAIService {
         final data = json.decode(response.body);
         print("Wit.ai Response: $data");
 
+        // Extract the intent.
         String intent = data['intents']?.isNotEmpty == true
             ? data['intents'][0]['name']
             : "unknown";
-
+        // Extract entities.
         Map<String, dynamic> entities = data['entities'] ?? {};
 
-        // Check if the intent is related to product availability and process accordingly
         if (intent == "product_query") {
-          return await _processProductAvailability(entities);
+          // First try processing via product code.
+          String result = await _processProductCode(entities);
+          // If no valid product code is detected, fall back to description search.
+          if (result.startsWith("Could you please provide") ||
+              result.contains("empty or malformed")) {
+            result = await _processProductDescription(entities);
+          }
+          return result;
         }
 
-        // Default response for unrecognized intents
-        return await _generateBotResponse(intent, entities);
+        // Handle non-product intents.
+        return _generateBotResponse(intent, entities);
       } else {
         return "Sorry, something went wrong while processing your request.";
       }
@@ -46,101 +55,151 @@ class WitAIService {
     }
   }
 
-  /// Processes product availability based on Wit.ai entities
-  Future<String> _processProductAvailability(Map<String, dynamic> entities) async {
-    print("Entities received: $entities"); // Debugging entities
+  /// Helper function to join multiple entity values.
+  String joinEntityValues(Map<String, dynamic> entities, String key) {
+    if (entities.containsKey(key)) {
+      var list = entities[key];
+      if (list is List && list.isNotEmpty) {
+        // Join all found values separated by a space.
+        return list.map((e) => e["value"].toString()).join(" ");
+      }
+    }
+    return "";
+  }
 
-    // Check for the key "product_code:product_code" since we're now using Product Code.
+  /// Tries to extract a product code and searches the database.
+  Future<String> _processProductCode(Map<String, dynamic> entities) async {
+    print("Entities for product code: $entities");
     if (entities.containsKey("product_code:product_code")) {
       var productEntity = entities["product_code:product_code"];
-      print("Found key 'product_code:product_code'");
-
-      // Check if productEntity is a List and not empty
       if (productEntity is List && productEntity.isNotEmpty) {
         String productCode = productEntity[0]["value"];
-        print("Extracted product code: $productCode"); // This should now print the product code
-        return await _checkProductAvailability(productCode); // Query Supabase with the extracted value
-      } else {
-        print("productEntity is not a List or is empty.");
+        print("Extracted product code: $productCode");
+        return await _checkProductAvailabilityByCode(productCode);
       }
-    } else {
-      print("No 'product_code:product_code' key found in entities.");
     }
-
     return "Could you please provide the product code?";
   }
 
-  /// Generates a bot response based on detected intent
-  Future<String> _generateBotResponse(String intent, Map<String, dynamic> entities) async {
+  /// Processes a query based on product description details.
+  Future<String> _processProductDescription(Map<String, dynamic> entities) async {
+    print("Entities for product description: $entities");
+
+    // Extract detailed tokens, joining multiple values if available.
+    String material =
+    joinEntityValues(entities, "product_material:product_material");
+    String color = joinEntityValues(entities, "product_color:product_color");
+    String category =
+    joinEntityValues(entities, "product_category:product_category");
+    String description =
+    joinEntityValues(entities, "product_description:product_description");
+
+    // Combine the tokens into one search query.
+    String queryPart = [material, color, category, description]
+        .where((element) => element.isNotEmpty)
+        .join(" ")
+        .trim();
+
+    if (queryPart.isEmpty) {
+      return "Could you please provide more details about the product?";
+    }
+
+    print("Constructed search query: $queryPart");
+
+    try {
+      // Split the combined query into tokens.
+      final tokens =
+      queryPart.split(' ').where((token) => token.isNotEmpty).toList();
+
+      // Build the query by applying an ilike filter for each token.
+      var queryBuilder = supabase
+          .from('products')
+          .select('*')
+          .gt('Quantity On Hand', 0);
+
+      for (var token in tokens) {
+        queryBuilder = queryBuilder.ilike('Concatenate', '%$token%');
+      }
+      final List<dynamic> response = await queryBuilder;
+
+      print("Supabase response (description search): $response");
+
+      if (response.isEmpty) {
+        return "❌ Sorry, no product found matching the description **$queryPart**.";
+      }
+      return _formatProductResponse(response);
+    } catch (e) {
+      print("Supabase error: $e");
+      return "Error fetching product details. Please try again later.";
+    }
+  }
+
+  /// Queries Supabase using an exact product code.
+  Future<String> _checkProductAvailabilityByCode(String productCode) async {
+    if (productCode.isEmpty) {
+      return "❌ Product code is empty or malformed!";
+    }
+    try {
+      print("🔍 Searching for product with code: $productCode");
+
+      final List<dynamic> response = await supabase
+          .from('products')
+          .select('*')
+          .eq('Product Code', productCode)
+          .gt('Quantity On Hand', 0);
+
+      print("Supabase response (code search): $response");
+
+      if (response.isEmpty) {
+        return "❌ Sorry, no product found with code **$productCode**.";
+      }
+      return _formatProductResponse(response);
+    } catch (e) {
+      print("Supabase error: $e");
+      return "Error fetching product details. Please try again later.";
+    }
+  }
+
+  /// Formats the product data into a human-readable response.
+  String _formatProductResponse(List<dynamic> products) {
+    if (products.length == 1) {
+      var product = products[0];
+      String location = product['Location Name'] ?? 'N/A';
+      String productName = product['Product Description'] ?? 'N/A';
+      int stock = product['Quantity On Hand'] ?? 0;
+      int price = product['Product Price'] ?? 0;
+
+      return "📍 **Location:** $location\n"
+          "📦 **$productName**\n"
+          "💰 **Price:** ₹$price\n"
+          "📊 **Stock:** $stock units";
+    } else {
+      // For multiple products, use a structured bullet list.
+      StringBuffer responseBuffer = StringBuffer();
+      responseBuffer.writeln("📦 **Available Products:**\n");
+      for (var product in products) {
+        String location = product['Location Name'] ?? 'N/A';
+        String productName = product['Product Description'] ?? 'N/A';
+        int stock = product['Quantity On Hand'] ?? 0;
+        int price = product['Product Price'] ?? 0;
+
+        responseBuffer.writeln(
+            "- **$productName**\n  Location: $location\n  Price: ₹$price\n  Stock: $stock units\n");
+      }
+      return responseBuffer.toString();
+
+    }
+  }
+
+  /// Generates default responses for non-product queries.
+  String _generateBotResponse(String intent, Map<String, dynamic> entities) {
     switch (intent) {
       case "Greeting":
         return "Hello! How can I assist you today?";
       case "Farewell":
         return "Goodbye! Have a great day!";
-      case "order_pizza":
-        return "Yeah Sure!!!";
       default:
         return "Sorry, I didn't understand that. Could you rephrase?";
     }
   }
-
-  /// Checks the product availability from Supabase database based on Product Code
-  /// Checks the product availability from Supabase database based on Product Code
-  Future<String> _checkProductAvailability(String productCode) async {
-    try {
-      print("🔍 Searching for product with Product Code: $productCode");
-
-      if (productCode.isEmpty) {
-        return "❌ Product code is empty or malformed!";
-      }
-
-      // Fetch all matching products
-      final List<dynamic> response = await supabase
-          .from('products')
-          .select('*')  // Fetch all columns
-          .eq('Product Code', productCode); // Exact match for product code
-
-      print("📊 Supabase response: $response");
-
-      // If no products were found
-      if (response.isEmpty) {
-        return "❌ Sorry, no product found with code **$productCode**.";
-      }
-
-      // If only one product is found, return a detailed response
-      if (response.length == 1) {
-        var product = response[0];
-        String productName = product['Product Description'] ?? 'N/A';
-        int stock = product['Quantity On Hand'] ?? 0;
-        int price = product['Product Price'] ?? 0;
-        String locationName = product['Location Name'];
-
-        return "📦 **$productName**\n"
-            "💰 **Price:** ₹$price\n"
-            "📊 **Stock:** $stock units";
-      }
-
-
-      // Build table format for multiple products
-      String tableHeader = "📦 **Available Products**\n"
-          "--------------------------------------\n"
-          "| Product Name              | Price  | Stock |\n"
-          "|---------------------------|--------|-------|\n";
-
-      String tableRows = response.map((product) {
-        String productName = (product['Product Description'] ?? 'N/A').padRight(25);
-        String price = ("₹" + (product['Product Price']?.toString() ?? '0')).padRight(7);
-        String stock = (product['Quantity On Hand']?.toString() ?? '0').padRight(5);
-
-        return "| $productName | $price | $stock |";
-      }).join("\n");
-
-      return "$tableHeader$tableRows\n--------------------------------------";
-    } catch (e) {
-      print("❌ Supabase error: $e");
-      return "Error fetching product details. Please try again later.";
-    }
-  }
-
-
 }
