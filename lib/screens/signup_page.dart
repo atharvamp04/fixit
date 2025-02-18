@@ -202,7 +202,7 @@ class _SignupPageState extends State<SignupPage> {
         hintText: 'Enter your $label',
         suffixIcon: Icon(icon, color: Colors.grey),
         focusedBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: Color(0xFF17CE92)),
+          borderSide: BorderSide(color: Color(0xFFEFE516)),
         ),
       ),
       obscureText: obscureText,
@@ -216,7 +216,7 @@ class _SignupPageState extends State<SignupPage> {
         child: ElevatedButton(
           onPressed: _isLoading ? null : signUp,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF17CE92),
+            backgroundColor: const Color(0xFFEFE516),
             padding: const EdgeInsets.symmetric(vertical: 15),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(30.0),

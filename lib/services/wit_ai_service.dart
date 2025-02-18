@@ -182,10 +182,12 @@ class WitAIService {
         String productName = product['Product Description'] ?? 'N/A';
         int stock = product['Quantity On Hand'] ?? 0;
         int price = product['Product Price'] ?? 0;
+
         responseBuffer.writeln(
             "- **$productName**\n  Location: $location\n  Price: ₹$price\n  Stock: $stock units\n");
       }
       return responseBuffer.toString();
+
     }
   }
 

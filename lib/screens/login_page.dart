@@ -155,11 +155,11 @@ class _LoginPageState extends State<LoginPage> {
                 suffixIcon: Icon(
                   Icons.email,
                   color: _emailFocusNode.hasFocus
-                      ? const Color(0xFF17CE92)
+                      ? const Color(0xFFEFE516)
                       : Colors.grey,
                 ),
                 focusedBorder: const UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF17CE92)),
+                  borderSide: BorderSide(color: Color(0xFFEFE516)),
                 ),
               ),
             ),
@@ -174,11 +174,11 @@ class _LoginPageState extends State<LoginPage> {
                 suffixIcon: Icon(
                   Icons.lock,
                   color: _passwordFocusNode.hasFocus
-                      ? const Color(0xFF17CE92)
+                      ? const Color(0xFFEFE516)
                       : Colors.grey,
                 ),
                 focusedBorder: const UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF17CE92)),
+                  borderSide: BorderSide(color: Color(0xFFEFE516)),
                 ),
               ),
               obscureText: true,
@@ -206,7 +206,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : signIn,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF17CE92),
+                    backgroundColor: const Color(0xFFEFE516),
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30.0),
@@ -246,7 +246,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: const Text(
                   'Don’t have an account? Sign up here.',
                   style: TextStyle(
-                    color: Color(0xFF17CE92),
+                    color: Color(0xFFEFE516),
                     fontWeight: FontWeight.bold,
                   ),
                 ),

@@ -86,7 +86,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFF17CE92),
+        backgroundColor: Color(0xFFEFE516),
         title: Text("Chat History", style: TextStyle(color: Colors.white)),
         centerTitle: true,
         actions: [
@@ -111,7 +111,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             child: ListTile(
               contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               leading: CircleAvatar(
-                backgroundColor: Color(0xFF17CE92),
+                backgroundColor: Color(0xFFEFE516),
                 child: Icon(Icons.chat, color: Colors.white),
               ),
               title: Text(
@@ -130,7 +130,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Color(0xFF17CE92),
+        backgroundColor: Color(0xFFEFE516),
         onPressed: _createNewSession,
         child: Icon(Icons.add, color: Colors.white),
       ),
