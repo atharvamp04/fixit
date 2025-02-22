@@ -10,7 +10,11 @@ class WitAIService {
   final SupabaseClient supabase = Supabase.instance.client;
 
   /// Processes the user's message using Wit.ai.
-  Future<String> processMessage(String message) async {
+  /// Returns a map with keys:
+  /// - type: "text" or "product"
+  /// - message: for text responses
+  /// - products: for product responses (list)
+  Future<Map<String, dynamic>> processMessage(String message) async {
     final String url =
         "https://api.wit.ai/message?v=20230124&q=${Uri.encodeComponent(message)}";
 
@@ -26,49 +30,54 @@ class WitAIService {
         final data = json.decode(response.body);
         print("Wit.ai Response: $data");
 
-        // Extract the intent.
+        // Extract intent and entities.
         String intent = data['intents']?.isNotEmpty == true
             ? data['intents'][0]['name']
             : "unknown";
-        // Extract entities.
         Map<String, dynamic> entities = data['entities'] ?? {};
 
         if (intent == "product_query") {
           // First try processing via product code.
-          String result = await _processProductCode(entities);
-          // If no valid product code is detected, fall back to description search.
-          if (result.startsWith("Could you please provide") ||
-              result.contains("empty or malformed")) {
+          Map<String, dynamic> result = await _processProductCode(entities);
+          // If result indicates missing or malformed info, fall back to description search.
+          if (result["type"] == "text" &&
+              (result["message"].startsWith("Could you please provide") ||
+                  result["message"].contains("empty or malformed"))) {
             result = await _processProductDescription(entities);
           }
           return result;
         }
 
-        // Handle non-product intents.
+        // Non-product intents.
         return _generateBotResponse(intent, entities);
       } else {
-        return "Sorry, something went wrong while processing your request.";
+        return {
+          "type": "text",
+          "message": "Sorry, something went wrong while processing your request."
+        };
       }
     } catch (e) {
       print("Error: $e");
-      return "Error: Unable to process your request. Please check your internet connection.";
+      return {
+        "type": "text",
+        "message": "Error: Unable to process your request. Please check your internet connection."
+      };
     }
   }
 
-  /// Helper function to join multiple entity values.
+  /// Joins multiple entity values for a given key.
   String joinEntityValues(Map<String, dynamic> entities, String key) {
     if (entities.containsKey(key)) {
       var list = entities[key];
       if (list is List && list.isNotEmpty) {
-        // Join all found values separated by a space.
         return list.map((e) => e["value"].toString()).join(" ");
       }
     }
     return "";
   }
 
-  /// Tries to extract a product code and searches the database.
-  Future<String> _processProductCode(Map<String, dynamic> entities) async {
+  /// Extracts a product code from entities and queries the database.
+  Future<Map<String, dynamic>> _processProductCode(Map<String, dynamic> entities) async {
     print("Entities for product code: $entities");
     if (entities.containsKey("product_code:product_code")) {
       var productEntity = entities["product_code:product_code"];
@@ -78,40 +87,45 @@ class WitAIService {
         return await _checkProductAvailabilityByCode(productCode);
       }
     }
-    return "Could you please provide the product code?";
+    return {"type": "text", "message": "Could you please provide the product code?"};
   }
 
-  /// Processes a query based on product description details.
-  Future<String> _processProductDescription(Map<String, dynamic> entities) async {
+  /// Processes a product description query by extracting detailed tokens,
+  /// building a search query, and then ranking the returned products.
+  Future<Map<String, dynamic>> _processProductDescription(Map<String, dynamic> entities) async {
     print("Entities for product description: $entities");
 
-    // Extract detailed tokens, joining multiple values if available.
-    String material =
-    joinEntityValues(entities, "product_material:product_material");
+    // Extract detailed tokens.
+    String material = joinEntityValues(entities, "product_material:product_material");
     String color = joinEntityValues(entities, "product_color:product_color");
-    String category =
-    joinEntityValues(entities, "product_category:product_category");
-    String description =
-    joinEntityValues(entities, "product_description:product_description");
+    String category = joinEntityValues(entities, "product_category:product_category");
+    String description = joinEntityValues(entities, "product_description:product_description");
+    String prodType = joinEntityValues(entities, "Product_type:Product_type");
+    String additionalComponent = joinEntityValues(entities, "additional_component:additional_component");
+    String colorDescription = joinEntityValues(entities, "color_description:color_description");
+    String prodComponent = joinEntityValues(entities, "product_component:product_component");
+    String prodModel = joinEntityValues(entities, "product_model:product_model");
+    String prodName = joinEntityValues(entities, "product_name:product_name");
+    String prodSeries = joinEntityValues(entities, "product_series:product_series");
+    String prodSize = joinEntityValues(entities, "product_size:product_size");
 
-    // Combine the tokens into one search query.
-    String queryPart = [material, color, category, description]
+    // Combine tokens into a single search string.
+    String queryPart = [material, color, category, description, prodType, additionalComponent, colorDescription, prodComponent, prodModel, prodName, prodSeries, prodSize]
         .where((element) => element.isNotEmpty)
         .join(" ")
         .trim();
 
     if (queryPart.isEmpty) {
-      return "Could you please provide more details about the product?";
+      return {"type": "text", "message": "Could you please provide more details about the product?"};
     }
 
     print("Constructed search query: $queryPart");
 
     try {
-      // Split the combined query into tokens.
-      final tokens =
-      queryPart.split(' ').where((token) => token.isNotEmpty).toList();
+      // Split the query into individual tokens.
+      final tokens = queryPart.split(' ').where((token) => token.isNotEmpty).toList();
 
-      // Build the query by applying an ilike filter for each token.
+      // Build the Supabase query with an ilike filter for each token.
       var queryBuilder = supabase
           .from('products')
           .select('*')
@@ -121,85 +135,70 @@ class WitAIService {
         queryBuilder = queryBuilder.ilike('Concatenate', '%$token%');
       }
       final List<dynamic> response = await queryBuilder;
-
       print("Supabase response (description search): $response");
 
       if (response.isEmpty) {
-        return "❌ Sorry, no product found matching the description **$queryPart**.";
+        return {"type": "text", "message": "❌ Sorry, no product found matching the description **$queryPart**."};
       }
-      return _formatProductResponse(response);
+      // Rank products using an advanced ranking algorithm.
+      List<dynamic> rankedProducts = _rankProducts(response, tokens);
+      return {"type": "product", "products": rankedProducts};
     } catch (e) {
       print("Supabase error: $e");
-      return "Error fetching product details. Please try again later.";
+      return {"type": "text", "message": "Error fetching product details. Please try again later."};
     }
   }
 
-  /// Queries Supabase using an exact product code.
-  Future<String> _checkProductAvailabilityByCode(String productCode) async {
+  /// Ranks products based on the number of query tokens found in the "Concatenate" field.
+  List<dynamic> _rankProducts(List<dynamic> products, List<String> tokens) {
+    for (var product in products) {
+      String concatText = (product['Concatenate'] ?? '').toString().toLowerCase();
+      int score = 0;
+      for (var token in tokens) {
+        if (concatText.contains(token.toLowerCase())) {
+          score++;
+        }
+      }
+      product['matchScore'] = score;
+    }
+    products.sort((a, b) => (b['matchScore'] as int).compareTo(a['matchScore'] as int));
+    print("Ranked products: ${products.map((p) => p['matchScore']).toList()}");
+    return products;
+  }
+
+  /// Queries Supabase for a product with an exact product code.
+  Future<Map<String, dynamic>> _checkProductAvailabilityByCode(String productCode) async {
     if (productCode.isEmpty) {
-      return "❌ Product code is empty or malformed!";
+      return {"type": "text", "message": "❌ Product code is empty or malformed!"};
     }
     try {
       print("🔍 Searching for product with code: $productCode");
-
       final List<dynamic> response = await supabase
           .from('products')
           .select('*')
           .eq('Product Code', productCode)
           .gt('Quantity On Hand', 0);
-
       print("Supabase response (code search): $response");
 
       if (response.isEmpty) {
-        return "❌ Sorry, no product found with code **$productCode**.";
+        return {"type": "text", "message": "❌ Sorry, no product found with code **$productCode**."};
       }
-      return _formatProductResponse(response);
+      return {"type": "product", "products": response};
     } catch (e) {
       print("Supabase error: $e");
-      return "Error fetching product details. Please try again later.";
-    }
-  }
-
-  /// Formats the product data into a human-readable response.
-  String _formatProductResponse(List<dynamic> products) {
-    if (products.length == 1) {
-      var product = products[0];
-      String location = product['Location Name'] ?? 'N/A';
-      String productName = product['Product Description'] ?? 'N/A';
-      int stock = product['Quantity On Hand'] ?? 0;
-      int price = product['Product Price'] ?? 0;
-
-      return "📍 **Location:** $location\n"
-          "📦 **$productName**\n"
-          "💰 **Price:** ₹$price\n"
-          "📊 **Stock:** $stock units";
-    } else {
-      // For multiple products, use a structured bullet list.
-      StringBuffer responseBuffer = StringBuffer();
-      responseBuffer.writeln("📦 **Available Products:**\n");
-      for (var product in products) {
-        String location = product['Location Name'] ?? 'N/A';
-        String productName = product['Product Description'] ?? 'N/A';
-        int stock = product['Quantity On Hand'] ?? 0;
-        int price = product['Product Price'] ?? 0;
-
-        responseBuffer.writeln(
-            "- **$productName**\n  Location: $location\n  Price: ₹$price\n  Stock: $stock units\n");
-      }
-      return responseBuffer.toString();
-
+      return {"type": "text", "message": "Error fetching product details. Please try again later."};
     }
   }
 
   /// Generates default responses for non-product queries.
-  String _generateBotResponse(String intent, Map<String, dynamic> entities) {
+  Map<String, dynamic> _generateBotResponse(String intent, Map<String, dynamic> entities) {
     switch (intent) {
       case "Greeting":
-        return "Hello! How can I assist you today?";
+        return {"type": "text", "message": "Hello! How can I assist you today?"};
       case "Farewell":
-        return "Goodbye! Have a great day!";
+        return {"type": "text", "message": "Goodbye! Have a great day!"};
       default:
-        return "Sorry, I didn't understand that. Could you rephrase?";
+        return {"type": "text", "message": "Sorry, I didn't understand that. Could you rephrase?"};
     }
   }
 }

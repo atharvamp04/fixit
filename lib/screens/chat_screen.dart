@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../services/wit_ai_service.dart';
+import '../widgets/product_grid.dart'; // New widget for product grid
 
 class ChatScreen extends StatefulWidget {
   final String sessionId; // Unique session ID for each chat
@@ -15,7 +16,8 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final WitAIService _witAIService = WitAIService();
-  List<Map<String, String>> messages = [];
+  // Messages now hold a type ("text" or "product") and associated data.
+  List<Map<String, dynamic>> messages = [];
   bool isLoading = false;
   final ScrollController _scrollController = ScrollController(); // Added scroll controller
 
@@ -52,10 +54,11 @@ class _ChatScreenState extends State<ChatScreen> {
       try {
         List<dynamic> jsonData = jsonDecode(chatHistory);
         setState(() {
-          messages = jsonData.map<Map<String, String>>((msg) {
+          messages = jsonData.map<Map<String, dynamic>>((msg) {
             return {
-              "sender": msg["sender"].toString(),
-              "text": msg["text"].toString()
+              "sender": msg["sender"],
+              "type": msg["type"],
+              "data": msg["data"],
             };
           }).toList();
         });
@@ -82,7 +85,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _controller.clear();
 
     setState(() {
-      messages.add({"sender": "user", "text": userMessage});
+      messages.add({"sender": "user", "type": "text", "data": userMessage});
       isLoading = true;
     });
     // Scroll to the bottom after adding the user message.
@@ -91,13 +94,17 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       final response = await _witAIService.processMessage(userMessage);
       setState(() {
-        messages.add({"sender": "bot", "text": response});
+        messages.add({
+          "sender": "bot",
+          "type": response["type"],
+          "data": response["type"] == "text" ? response["message"] : response["products"]
+        });
       });
       // Scroll to the bottom after receiving the bot's reply.
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
     } catch (error) {
       setState(() {
-        messages.add({"sender": "bot", "text": "Sorry, I couldn't process that."});
+        messages.add({"sender": "bot", "type": "text", "data": "Sorry, I couldn't process that."});
       });
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
     } finally {
@@ -109,8 +116,6 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   // Start a new chat session.
-  // Using Navigator.push adds the new ChatScreen on top of the current one,
-  // ensuring that the new chat screen gets its own Scaffold (with an AppBar and a back button).
   void _startNewChat() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String newSessionId = DateTime.now().millisecondsSinceEpoch.toString();
@@ -128,7 +133,6 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Each ChatScreen has its own Scaffold with an AppBar.
       appBar: AppBar(
         backgroundColor: const Color(0xFFF8F13F),
         title: const Text(
@@ -140,7 +144,6 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
         centerTitle: true,
-        // The new chat button is provided in the AppBar's actions.
         actions: [
           IconButton(
             icon: const Icon(Icons.add_comment, color: Colors.white),
@@ -153,18 +156,25 @@ class _ChatScreenState extends State<ChatScreen> {
           // Chat messages list.
           Expanded(
             child: ListView.builder(
-              controller: _scrollController, // Attach scroll controller here.
+              controller: _scrollController,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               itemCount: messages.length,
               itemBuilder: (context, index) {
-                return ChatBubble(
-                  text: messages[index]["text"] ?? "No content",
-                  isUser: messages[index]["sender"] == "user",
-                );
+                var msg = messages[index];
+                if (msg["type"] == "text") {
+                  return ChatBubble(
+                    text: msg["data"] ?? "No content",
+                    isUser: msg["sender"] == "user",
+                  );
+                } else if (msg["type"] == "product") {
+                  // Display product results using ProductGrid widget.
+                  return ProductGrid(products: msg["data"]);
+                } else {
+                  return const SizedBox();
+                }
               },
             ),
           ),
-          // Loading indicator while processing a message.
           if (isLoading)
             const Padding(
               padding: EdgeInsets.all(8.0),
