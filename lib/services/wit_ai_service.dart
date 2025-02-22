@@ -110,7 +110,7 @@ class WitAIService {
     String prodSize = joinEntityValues(entities, "product_size:product_size");
 
     // Combine tokens into a single search string.
-    String queryPart = [material, color, category, description, prodType, additionalComponent, colorDescription, prodComponent, prodModel, prodName, prodSeries, prodSize]
+    String queryPart = [material, prodComponent, colorDescription, color, category, description, prodType, additionalComponent, prodModel, prodName, prodSeries, prodSize]
         .where((element) => element.isNotEmpty)
         .join(" ")
         .trim();
