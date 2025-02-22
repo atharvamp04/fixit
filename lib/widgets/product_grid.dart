@@ -78,7 +78,7 @@ class _ProductCardState extends State<ProductCard> {
               Text(
                 productName,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                maxLines: 2,
+                maxLines: 4,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 8),
