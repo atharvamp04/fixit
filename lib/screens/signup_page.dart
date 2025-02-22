@@ -84,9 +84,66 @@ class _SignupPageState extends State<SignupPage> {
     }
   }
 
-  Future<void> googleSignIn() async {
-    // Implement Google Sign-In logic here
-    print("Google Sign-In clicked");
+  Future<void> _nativeGoogleSignIn() async {
+    const webClientId =
+        '420646018313-4iql2ugkb2s080g1cgbansvugmqnql1k.apps.googleusercontent.com';
+    const iosClientId =
+        '420646018313-onbp2q23jm6f7j26ipp2nl1sgeassoki.apps.googleusercontent.com';
+
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        clientId: iosClientId,
+        serverClientId: webClientId,
+      );
+
+      final googleUser = await googleSignIn.signIn();
+      if (googleUser == null) return;
+
+      final googleAuth = await googleUser.authentication;
+      final accessToken = googleAuth.accessToken;
+      final idToken = googleAuth.idToken;
+
+      if (accessToken == null || idToken == null) {
+        throw 'Access Token or ID Token not found.';
+      }
+
+      final response = await Supabase.instance.client.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: accessToken,
+      );
+
+      if (response.session != null) {
+        final userId = response.user?.id;
+        if (userId == null) throw 'User ID is null after Google Sign-In';
+
+        // Create the profile for Google sign-in users
+        final data = await Supabase.instance.client
+            .from('profiles')
+            .upsert({
+          'id': userId,
+          'full_name': googleUser.displayName ?? '',
+          'email': googleUser.email,
+          'mobile_number': '',
+          'gender': '',
+        })
+            .select();
+
+        if (data is! List) {
+          throw Exception('Profile creation failed: $data');
+        }
+
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Google Sign-In failed')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error during Google Sign-In: $e')),
+      );
+    }
   }
 
   @override
@@ -197,17 +254,17 @@ class _SignupPageState extends State<SignupPage> {
           borderRadius: BorderRadius.circular(30.0),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.3), // Lighter shadow
-              spreadRadius: 1,  // Reduced spread
-              blurRadius: 4,  // Reduced blur
-              offset: const Offset(0, 2), // Subtle shadow position
+              color: Colors.grey.withOpacity(0.3),
+              spreadRadius: 1,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
         child: SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            onPressed: googleSignIn,
+            onPressed: _nativeGoogleSignIn,  // FIXED HERE
             icon: Image.asset(
               'assets/Google.png', // Ensure asset exists
               height: 24,
@@ -223,7 +280,7 @@ class _SignupPageState extends State<SignupPage> {
                 borderRadius: BorderRadius.circular(30.0),
               ),
               backgroundColor: Colors.white,
-              side: BorderSide.none, // Removes black border
+              side: BorderSide.none,
             ),
           ),
         ),

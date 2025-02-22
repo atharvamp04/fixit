@@ -60,7 +60,16 @@ class _LoginPageState extends State<LoginPage> {
       _isLoading = true;
     });
 
-    final GoogleSignIn googleSignIn = GoogleSignIn();
+    // Replace with your own Web and iOS client IDs.
+    const String webClientId =
+        '420646018313-4iql2ugkb2s080g1cgbansvugmqnql1k.apps.googleusercontent.com';
+    const String iosClientId =
+        '420646018313-onbp2q23jm6f7j26ipp2nl1sgeassoki.apps.googleusercontent.com';
+
+    final GoogleSignIn googleSignIn = GoogleSignIn(
+      clientId: iosClientId,
+      serverClientId: webClientId,
+    );
 
     try {
       final googleUser = await googleSignIn.signIn();
@@ -76,6 +85,7 @@ class _LoginPageState extends State<LoginPage> {
         throw 'Failed to retrieve Google tokens.';
       }
 
+      // Sign in with Google using Supabase.
       final response = await Supabase.instance.client.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: idToken,
@@ -97,6 +107,7 @@ class _LoginPageState extends State<LoginPage> {
       });
     }
   }
+
 
   @override
   void dispose() {
