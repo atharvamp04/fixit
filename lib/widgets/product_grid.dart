@@ -135,7 +135,7 @@ class _ProductCardState extends State<ProductCard> {
                     });
                   },
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: Color(0xFFEFE516),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),

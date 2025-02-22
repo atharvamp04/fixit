@@ -13,36 +13,20 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Basic Profile Fields
-  String fullName = "";
-  String mobileNumber = "";
-  String email = "";
-  String dateOfBirth = "";
-  String profilePhotoUrl = "";
-
-  // Additional Field: Social Links
-  String socialLinks = "";
-
-  // Controllers for text fields.
+  // Profile Fields
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _dobController = TextEditingController();
   final TextEditingController _socialLinksController = TextEditingController();
+  final TextEditingController _genderController = TextEditingController(text: "Male");
 
-  // Instead of a dropdown for gender, use a text field.
-  final TextEditingController _genderController =
-  TextEditingController(text: "Male");
-
-  // For image picking.
   final ImagePicker _picker = ImagePicker();
-
-  // Supabase client instance.
   final SupabaseClient supabase = Supabase.instance.client;
 
-  // Loading state variables.
   bool _isLoading = false;
   bool _isImageUploading = false;
+  String profilePhotoUrl = "";
 
   @override
   void initState() {
@@ -50,18 +34,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _fetchProfile();
   }
 
-  @override
-  void dispose() {
-    _fullNameController.dispose();
-    _mobileController.dispose();
-    _emailController.dispose();
-    _dobController.dispose();
-    _socialLinksController.dispose();
-    _genderController.dispose();
-    super.dispose();
-  }
-
-  /// Fetch profile data from Supabase and update the UI.
   Future<void> _fetchProfile() async {
     final user = supabase.auth.currentUser;
     if (user == null) return;
@@ -72,37 +44,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         .eq('id', user.id)
         .maybeSingle();
 
-    if (response == null) {
-      print("No profile data found for user ${user.id}");
-      return;
-    }
+    if (response == null) return;
 
     setState(() {
-      fullName = response['full_name'] ?? "";
-      mobileNumber = response['mobile_number'] ?? "";
-      email = response['email'] ?? "";
-      dateOfBirth = response['date_of_birth'] ?? "";
+      _fullNameController.text = response['full_name'] ?? "";
+      _mobileController.text = response['mobile_number'] ?? "";
+      _emailController.text = response['email'] ?? "";
+      _dobController.text = response['date_of_birth'] ?? "";
+      _socialLinksController.text = response['social_links'] ?? "";
+      _genderController.text = response['gender'] ?? "Male";
       profilePhotoUrl = response['profile_photo'] ?? "";
-
-      // Use fetched gender or default to "Male".
-      String fetchedGender = response['gender'] ?? "";
-      if (fetchedGender.trim().isEmpty) {
-        _genderController.text = "Male";
-      } else {
-        _genderController.text = fetchedGender;
-      }
-
-      socialLinks = response['social_links'] ?? "";
-
-      _fullNameController.text = fullName;
-      _mobileController.text = mobileNumber;
-      _emailController.text = email;
-      _dobController.text = dateOfBirth;
-      _socialLinksController.text = socialLinks;
     });
   }
 
-  /// Update profile data in Supabase.
   Future<void> _updateProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -125,258 +79,176 @@ class _ProfileScreenState extends State<ProfileScreen> {
     };
 
     try {
-      // Chain .select() so that Supabase returns the updated rows.
-      final response = await supabase
-          .from('profiles')
-          .update(updates)
-          .eq('id', user.id)
-          .select();
-
-      if (response != null && response is List && response.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully!')),
-        );
-        _fetchProfile();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error updating profile: No data returned.')),
-        );
-      }
+      await supabase.from('profiles').update(updates).eq('id', user.id);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile updated successfully!')),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error updating profile: $e')),
       );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile == null) return;
 
     setState(() {
-      _isLoading = false;
+      _isImageUploading = true;
     });
+
+    try {
+      profilePhotoUrl = pickedFile.path; // Upload the image to a cloud service and store its URL.
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Image upload failed: $e')),
+      );
+    } finally {
+      setState(() {
+        _isImageUploading = false;
+      });
+    }
   }
 
-  /// Logout the user from Supabase and navigate to the login screen.
   Future<void> _logout() async {
-    try {
-      await supabase.auth.signOut();
-      // Navigate to the login page (ensure your login route is correctly set up).
-      Navigator.pushReplacementNamed(context, '/login');
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error logging out: $e')),
-      );
-    }
-  }
-
-  /// Use image_picker to pick an image and upload it to Supabase Storage.
-  Future<void> _pickProfileImage() async {
-    try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      if (image == null) return;
-
-      setState(() {
-        _isImageUploading = true;
-      });
-
-      final String fileName =
-          '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
-      final String filePath = 'profile_photos/$fileName';
-
-      // Upload the file to Supabase Storage.
-      try {
-        final storageResponse = await supabase.storage
-            .from('profile-photos')
-            .upload(filePath, File(image.path));
-        print("File uploaded successfully: $storageResponse");
-      } catch (error) {
-        throw Exception("Upload failed: $error");
-      }
-
-      // Get the public URL of the uploaded image.
-      final publicUrl =
-      supabase.storage.from('profile-photos').getPublicUrl(filePath);
-      setState(() {
-        profilePhotoUrl = publicUrl;
-        _isImageUploading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isImageUploading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error uploading image: $e')),
-      );
-    }
+    await supabase.auth.signOut();
+    Navigator.pushReplacementNamed(context, '/login'); // Navigate to the login screen
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("My Profile"),
-        centerTitle: true,
+        title: const Text(
+          'Profile',
+          style: TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: Color(0xFFEFE516),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Profile photo with an edit icon.
-              Center(
-                child: Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 60,
-                      backgroundImage: profilePhotoUrl.isNotEmpty
-                          ? NetworkImage(profilePhotoUrl)
-                          : const AssetImage('assets/default_profile.png')
-                      as ImageProvider,
-                      onBackgroundImageError: (_, __) {
-                        // If the network image fails, reset to asset image.
-                        setState(() {
-                          profilePhotoUrl = "";
-                        });
-                      },
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 4,
-                      child: InkWell(
-                        onTap: _pickProfileImage,
-                        child: CircleAvatar(
-                          radius: 20,
-                          backgroundColor: Colors.blue,
-                          child: _isImageUploading
-                              ? const CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          )
-                              : const Icon(
-                            Icons.camera_alt,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.grey.shade300,
+                    backgroundImage: profilePhotoUrl.isNotEmpty
+                        ? FileImage(File(profilePhotoUrl)) as ImageProvider
+                        : const AssetImage('assets/default_profile.png'),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: _pickImage,
+                      child: CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Colors.white,
+                        child: const Icon(Icons.camera_alt, color: Colors.black),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
-              // Full Name field.
-              TextFormField(
-                controller: _fullNameController,
-                decoration: const InputDecoration(
-                  labelText: "Full Name",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
-                ),
-                validator: (value) => value == null || value.isEmpty
-                    ? "Please enter your full name"
-                    : null,
+            ),
+            const SizedBox(height: 20),
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  _buildTextField(_fullNameController, "Full Name", Icons.person),
+                  const SizedBox(height: 10),
+                  _buildTextField(_emailController, "Email", Icons.email, readOnly: true),
+                  const SizedBox(height: 10),
+                  _buildTextField(_mobileController, "Mobile Number", Icons.phone),
+                  const SizedBox(height: 10),
+                  _buildTextField(_dobController, "Date of Birth", Icons.calendar_today),
+                  const SizedBox(height: 10),
+                  _buildTextField(_genderController, "Gender", Icons.person_outline),
+                  const SizedBox(height: 10),
+                  _buildTextField(_socialLinksController, "Social Links", Icons.link),
+                ],
               ),
-              const SizedBox(height: 16),
-              // Mobile Number field.
-              TextFormField(
-                controller: _mobileController,
-                decoration: const InputDecoration(
-                  labelText: "Mobile Number",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.phone),
-                ),
-                keyboardType: TextInputType.phone,
-                validator: (value) => value == null || value.isEmpty
-                    ? "Please enter your mobile number"
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              // Email field.
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: "Email",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
-                ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return "Please enter your email";
-                  }
-                  if (!value.contains('@')) {
-                    return "Enter a valid email";
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              // Date of Birth field with date picker.
-              GestureDetector(
-                onTap: () async {
-                  final pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.tryParse(_dobController.text) ??
-                        DateTime(1990),
-                    firstDate: DateTime(1900),
-                    lastDate: DateTime.now(),
-                  );
-                  if (pickedDate != null) {
-                    setState(() {
-                      _dobController.text =
-                      pickedDate.toIso8601String().split('T')[0];
-                    });
-                  }
-                },
-                child: AbsorbPointer(
-                  child: TextFormField(
-                    controller: _dobController,
-                    decoration: const InputDecoration(
-                      labelText: "Date of Birth",
-                      border: OutlineInputBorder(),
-                      suffixIcon: Icon(Icons.calendar_today),
+            ),
+            const SizedBox(height: 20),
+            Center(
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _updateProfile,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFEFE516),
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30.0),
+                        ),
+                        elevation: 5,
+                        shadowColor: Colors.black.withOpacity(0.3),
+                      ),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                        'Update Profile',
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _logout,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30.0),
+                        ),
+                        elevation: 5,
+                        shadowColor: Colors.black.withOpacity(0.3),
+                      ),
+                      child: const Text(
+                        'Logout',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              // Gender field as a text field.
-              TextFormField(
-                controller: _genderController,
-                decoration: const InputDecoration(
-                  labelText: "Gender",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person_outline),
-                ),
-                validator: (value) => value == null || value.isEmpty
-                    ? "Please enter your gender"
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              // Social Links field.
-              TextFormField(
-                controller: _socialLinksController,
-                decoration: const InputDecoration(
-                  labelText: "Social Links (Optional)",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.link),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Update Profile Button.
-              ElevatedButton(
-                onPressed: _updateProfile,
-                child: const Text("Update Profile"),
-              ),
-              const SizedBox(height: 10),
-              // Logout Button.
-              ElevatedButton(
-                onPressed: _logout,
-                child: const Text("Logout"),
-              ),
-            ],
-          ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool readOnly = false}) {
+    return TextField(
+      controller: controller,
+      readOnly: readOnly,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: "Enter $label",
+        prefixIcon: Icon(icon, color: const Color(0xFFEFE516)),
+        focusedBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(color: Color(0xFFEFE516)),
         ),
       ),
     );

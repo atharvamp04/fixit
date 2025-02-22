@@ -31,12 +31,14 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // List of screens
-  final List<Widget> _widgetOptions = [
-    ChatScreen(sessionId: ''),
+  String _sessionId = DateTime.now().millisecondsSinceEpoch.toString();
+
+  List<Widget> get _widgetOptions => [
+    ChatScreen(sessionId: _sessionId),
     HistoryScreen(),
     ProfileScreen(),
   ];
+
 
   // List of titles for the AppBar
   final List<String> _appBarTitles = [
@@ -58,29 +60,13 @@ class _HomePageState extends State<HomePage> {
         return true; // Allow default behavior (exit app)
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(_appBarTitles[_selectedIndex]), // Dynamic title
-          leading: _selectedIndex == 0
-              ? null // Hide back button on Chat screen
-              : IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () {
-              setState(() {
-                _selectedIndex = 0; // Navigate back to Chat
-              });
-            },
-          ),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.logout),
-              onPressed: signOut,
-            ),
-          ],
-        ),
         body: _widgetOptions[_selectedIndex],
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
+          selectedItemColor: Color(0xFFEFE516), // Color for selected item
+          unselectedItemColor: Colors.grey, // Grey for unselected items
+          showUnselectedLabels: true,
           items: [
             BottomNavigationBarItem(
               icon: Icon(Icons.chat),
@@ -96,6 +82,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
+
       ),
     );
   }

@@ -87,8 +87,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xFFEFE516),
-        title: Text("Chat History", style: TextStyle(color: Colors.white)),
-        centerTitle: true,
+        title: Text("History", style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800)),
         actions: [
           IconButton(
             icon: Icon(Icons.delete, color: Colors.white),
@@ -128,11 +127,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Color(0xFFEFE516),
-        onPressed: _createNewSession,
-        child: Icon(Icons.add, color: Colors.white),
       ),
     );
   }

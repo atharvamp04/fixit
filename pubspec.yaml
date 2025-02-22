@@ -20,6 +20,7 @@ dependencies:
 #  dialogflow_flutter: ^1.0.0
   http: ^1.0.0
   bubble: ^1.2.1
+  flutter_animate: ^4.5.2
 
 dev_dependencies:
   flutter_test:
@@ -49,5 +50,6 @@ flutter_icons:
 flutter:
   assets:
     - assets/default_profile.png
+    - assets/Google.png
   uses-material-design: true
 
