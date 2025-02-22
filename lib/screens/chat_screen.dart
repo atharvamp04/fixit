@@ -197,77 +197,34 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: Stack(
-                    children: [
-                      TextField(
-                        controller: _controller,
-                        style: const TextStyle(fontSize: 16),
-                        decoration: InputDecoration(
-                          hintText: "", // Hint handled separately
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(25),
-                            borderSide: const BorderSide(color: Colors.grey, width: 1),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(25),
-                            borderSide: const BorderSide(color: Color(0xFFEFE516), width: 2),
-                          ),
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            _isTextFieldActive = value.isNotEmpty;
-                          });
-                          if (_isTextFieldActive) {
-                            _stopHintAnimation();
-                          } else {
-                            _startHintAnimation();
-                          }
-                        },
-                        onTap: () {
-                          setState(() {
-                            _isTextFieldActive = true;
-                          });
-                          _stopHintAnimation();
-                        },
-                        onEditingComplete: () {
-                          setState(() {
-                            _isTextFieldActive = false;
-                          });
-                          _startHintAnimation();
-                        },
+                  child: TextField(
+                    controller: _controller,
+                    style: const TextStyle(fontSize: 16),
+                    decoration: InputDecoration(
+                      hintText: hintMessages[hintIndex],
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15), // Reduced border radius
+                        borderSide: const BorderSide(color: Colors.grey, width: 1),
                       ),
-                      Positioned(
-                        left: 20,
-                        top: 15,
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 500),
-                          transitionBuilder: (widget, animation) => FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0.5, 0),
-                                end: Offset.zero,
-                              ).animate(animation),
-                              child: widget,
-                            ),
-                          ),
-                          child: !_isTextFieldActive
-                              ? Text(
-                            hintMessages[hintIndex],
-                            key: ValueKey(hintMessages[hintIndex]),
-                            style: const TextStyle(fontSize: 14, color: Colors.grey),
-                          )
-                              : const SizedBox(),
-                        ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15), // Reduced border radius
+                        borderSide: const BorderSide(color: Color(0xFFEFE516), width: 2),
                       ),
-                    ],
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.send, color: Color(0xFFEFE516)),
-                  onPressed: _sendMessage,
+                GestureDetector(
+                  onTap: _sendMessage,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFFF8F13F), // Yellow background
+                    ),
+                    child: const Icon(Icons.send, color: Colors.white), // White icon
+                  ),
                 ),
               ],
             ),
