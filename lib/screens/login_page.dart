@@ -13,8 +13,10 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
   final FocusNode _emailFocusNode = FocusNode();
   final FocusNode _passwordFocusNode = FocusNode();
+
   bool _rememberMe = false;
   bool _isLoading = false;
   final AuthService _authService = AuthService(Supabase.instance.client);
@@ -40,9 +42,12 @@ class _LoginPageState extends State<LoginPage> {
         Navigator.pushReplacementNamed(context, '/home');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User does not exist, please sign up')),
+          const SnackBar(
+            content: Text(
+              'Login failed: Your account may not exist or is pending admin approval.',
+            ),
+          ),
         );
-        Navigator.pushReplacementNamed(context, '/signup');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -96,6 +101,16 @@ class _LoginPageState extends State<LoginPage> {
         throw 'Google Sign-In failed.';
       }
 
+      final userId = response.user?.id;
+      if (userId == null) throw 'User ID is null after Google Sign-In';
+
+      // Check if the Google user is approved.
+      final approved = await _authService.isUserApproved(userId);
+      if (!approved) {
+        await _authService.signOut();
+        throw 'Your account is pending admin approval.';
+      }
+
       Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -107,7 +122,6 @@ class _LoginPageState extends State<LoginPage> {
       });
     }
   }
-
 
   @override
   void dispose() {
@@ -213,19 +227,29 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 20),
-
-              /// OR Divider
               Row(
                 children: [
-                  Expanded(child: Divider(color: Colors.grey.shade400, thickness: 1)),
+                  Expanded(
+                    child: Divider(
+                      color: Colors.grey.shade400,
+                      thickness: 1,
+                    ),
+                  ),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Text('OR', style: TextStyle(fontSize: 16, color: Colors.grey)),
+                    child: Text(
+                      'OR',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
                   ),
-                  Expanded(child: Divider(color: Colors.grey.shade400, thickness: 1)),
+                  Expanded(
+                    child: Divider(
+                      color: Colors.grey.shade400,
+                      thickness: 1,
+                    ),
+                  ),
                 ],
               ),
-
               const SizedBox(height: 20),
               Center(
                 child: SizedBox(
@@ -279,5 +303,4 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-
 }

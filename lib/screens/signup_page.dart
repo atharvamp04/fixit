@@ -11,12 +11,14 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
+  // Controllers for input fields.
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _mobileNumberController = TextEditingController();
   final _genderController = TextEditingController();
 
+  // Focus nodes for UI behavior.
   final FocusNode _emailFocus = FocusNode();
   final FocusNode _passwordFocus = FocusNode();
   final FocusNode _fullNameFocus = FocusNode();
@@ -43,6 +45,8 @@ class _SignupPageState extends State<SignupPage> {
     super.dispose();
   }
 
+  /// Signs up a new user with email and password.
+  /// The new profile is created with approved set to false.
   Future<void> signUp() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -65,11 +69,25 @@ class _SignupPageState extends State<SignupPage> {
 
     try {
       final user = await _authService.signUpWithEmailPassword(
-        email, password, fullName, mobileNumber, gender,
+        email,
+        password,
+        fullName,
+        mobileNumber,
+        gender,
       );
 
       if (user != null) {
-        Navigator.pushReplacementNamed(context, '/home');
+        // Inform the user that their account is pending approval.
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Your account has been created and is pending admin approval. Please wait for approval before logging in.',
+            ),
+          ),
+        );
+        // Sign out the new user if they're automatically logged in.
+        await _authService.signOut();
+        Navigator.pushReplacementNamed(context, '/login');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Signup failed')),
@@ -84,6 +102,11 @@ class _SignupPageState extends State<SignupPage> {
     }
   }
 
+  /// Signs in using Google.
+  /// If a profile already exists:
+  ///   - If approved, log the user in.
+  ///   - If not approved, sign the user out and show a pending approval message.
+  /// If no profile exists, create one with approved = false, then sign out.
   Future<void> _nativeGoogleSignIn() async {
     const webClientId =
         '420646018313-4iql2ugkb2s080g1cgbansvugmqnql1k.apps.googleusercontent.com';
@@ -97,7 +120,7 @@ class _SignupPageState extends State<SignupPage> {
       );
 
       final googleUser = await googleSignIn.signIn();
-      if (googleUser == null) return;
+      if (googleUser == null) return; // User cancelled the sign-in
 
       final googleAuth = await googleUser.authentication;
       final accessToken = googleAuth.accessToken;
@@ -107,18 +130,41 @@ class _SignupPageState extends State<SignupPage> {
         throw 'Access Token or ID Token not found.';
       }
 
+      // Sign in with Google using Supabase.
       final response = await Supabase.instance.client.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: idToken,
         accessToken: accessToken,
       );
 
-      if (response.session != null) {
-        final userId = response.user?.id;
-        if (userId == null) throw 'User ID is null after Google Sign-In';
+      if (response.session == null) {
+        throw 'Google Sign-In failed.';
+      }
 
-        // Create the profile for Google sign-in users
-        final data = await Supabase.instance.client
+      final userId = response.user?.id;
+      if (userId == null) throw 'User ID is null after Google Sign-In';
+
+      // Check if the user's profile exists.
+      final profileResponse = await Supabase.instance.client
+          .from('profiles')
+          .select('approved')
+          .eq('id', userId)
+          .maybeSingle();
+
+      // Use null-aware access to safely handle profileResponse.
+      final profileData = profileResponse != null ? profileResponse['approved'] : null;
+      if (profileData != null) {
+        // Profile exists; check approval status.
+        final approved = profileData as bool?;
+        if (approved == true) {
+          Navigator.pushReplacementNamed(context, '/home');
+        } else {
+          await _authService.signOut();
+          throw 'Your account is pending admin approval.';
+        }
+      } else {
+        // No profile exists; create a new profile with approved = false.
+        final upsertResponse = await Supabase.instance.client
             .from('profiles')
             .upsert({
           'id': userId,
@@ -126,29 +172,144 @@ class _SignupPageState extends State<SignupPage> {
           'email': googleUser.email,
           'mobile_number': '',
           'gender': '',
-        })
-            .select();
+          'approved': false,
+        }).select();
 
-        if (data is! List) {
-          throw Exception('Profile creation failed: $data');
+        // upsertResponse is expected to be a List.
+        if (upsertResponse == null || upsertResponse is! List || upsertResponse.isEmpty) {
+          throw Exception('Profile creation failed: $upsertResponse');
         }
 
-        Navigator.pushReplacementNamed(context, '/home');
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Google Sign-In failed')),
-        );
+        await _authService.signOut();
+        throw 'Your account has been created and is pending admin approval. Please wait for approval before logging in.';
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error during Google Sign-In: $e')),
+        SnackBar(content: Text('Google Sign-In error: $e')),
       );
     }
+  }
+
+  /// Builds a text field with custom styling.
+  Widget _buildTextField(
+      TextEditingController controller,
+      String label,
+      IconData icon,
+      FocusNode focusNode, {
+        bool obscureText = false,
+      }) {
+    return Focus(
+      onFocusChange: (hasFocus) {
+        setState(() {}); // Update UI when focus changes.
+      },
+      child: TextField(
+        controller: controller,
+        focusNode: focusNode,
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: 'Enter your $label',
+          suffixIcon: Icon(
+            icon,
+            color: focusNode.hasFocus ? const Color(0xFFEFE516) : Colors.grey,
+          ),
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Color(0xFFEFE516)),
+          ),
+        ),
+        obscureText: obscureText,
+      ),
+    );
+  }
+
+  /// Builds the signup button.
+  Widget _buildSignupButton() {
+    return Center(
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: _isLoading ? null : signUp,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFEFE516),
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30.0),
+            ),
+          ),
+          child: _isLoading
+              ? const CircularProgressIndicator(color: Colors.white)
+              : const Text('Sign Up', style: TextStyle(color: Colors.white)),
+        ),
+      ),
+    );
+  }
+
+  /// Builds the Google signup button.
+  Widget _buildGoogleSignupButton() {
+    return Center(
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.3),
+              spreadRadius: 1,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _nativeGoogleSignIn,
+            icon: Image.asset(
+              'assets/Google.png', // Ensure this asset exists.
+              height: 24,
+              width: 24,
+            ),
+            label: const Text(
+              'Sign Up with Google',
+              style: TextStyle(color: Colors.black),
+            ),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30.0),
+              ),
+              backgroundColor: Colors.white,
+              side: BorderSide.none,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Builds an "OR" separator.
+  Widget _buildOrSeparator() {
+    return Row(
+      children: [
+        Expanded(
+          child: Divider(thickness: 2, color: Colors.grey.shade400),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Text(
+            'OR',
+            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+          ),
+        ),
+        Expanded(
+          child: Divider(thickness: 2, color: Colors.grey.shade400),
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // SingleChildScrollView to handle overflow on small screens.
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
@@ -189,124 +350,15 @@ class _SignupPageState extends State<SignupPage> {
                     'Already have an account? Login',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFFEFE516), // Yellow color
+                      color: Color(0xFFEFE516), // Yellow color.
                     ),
                   ),
                 ),
               )
-
             ],
           ),
         ),
       ),
     );
   }
-
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon, FocusNode focusNode, {bool obscureText = false}) {
-    return Focus(
-      onFocusChange: (hasFocus) {
-        setState(() {}); // Updates UI when focus changes
-      },
-      child: TextField(
-        controller: controller,
-        focusNode: focusNode,
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: 'Enter your $label',
-          suffixIcon: Icon(
-            icon,
-            color: focusNode.hasFocus ? const Color(0xFFEFE516) : Colors.grey,
-          ),
-          focusedBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Color(0xFFEFE516)),
-          ),
-        ),
-        obscureText: obscureText,
-      ),
-    );
-  }
-
-  Widget _buildSignupButton() {
-    return Center(
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: _isLoading ? null : signUp,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFEFE516),
-            padding: const EdgeInsets.symmetric(vertical: 15),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30.0),
-            ),
-          ),
-          child: _isLoading
-              ? const CircularProgressIndicator(color: Colors.white)
-              : const Text('Sign Up', style: TextStyle(color: Colors.white)),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGoogleSignupButton() {
-    return Center(
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.3),
-              spreadRadius: 1,
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: _nativeGoogleSignIn,  // FIXED HERE
-            icon: Image.asset(
-              'assets/Google.png', // Ensure asset exists
-              height: 24,
-              width: 24,
-            ),
-            label: const Text(
-              'Sign Up with Google',
-              style: TextStyle(color: Colors.black),
-            ),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30.0),
-              ),
-              backgroundColor: Colors.white,
-              side: BorderSide.none,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-
-  Widget _buildOrSeparator() {
-    return Row(
-      children: [
-        Expanded(
-          child: Divider(thickness: 2, color: Colors.grey.shade400),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: Text(
-            'OR',
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-          ),
-        ),
-        Expanded(
-          child: Divider(thickness: 2, color: Colors.grey.shade400),
-        ),
-      ],
-    );
-  }
-
 }
