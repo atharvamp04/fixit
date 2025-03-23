@@ -22,13 +22,14 @@ dependencies:
   bubble: ^1.2.1
   flutter_animate: ^4.5.2
   mailer: ^6.0.1
-
+  flutter_launcher_icons: ^0.14.3
+  pdf: ^3.10.4
+  printing: ^5.11.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
-  flutter_launcher_icons: ^0.10.0
 
 flutter_icons:
   android: true
@@ -53,5 +54,6 @@ flutter:
   assets:
     - assets/default_profile.png
     - assets/Google.png
+    - assets/invoice_template.jpg
   uses-material-design: true
 

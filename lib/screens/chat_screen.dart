@@ -192,6 +192,7 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: EdgeInsets.all(8.0),
               child: CircularProgressIndicator(color: Color(0xFFEFE516)),
             ),
+
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: Row(

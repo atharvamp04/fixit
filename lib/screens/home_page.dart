@@ -3,8 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'chat_screen.dart';
 import 'history_screen.dart';
 import 'profile_screen.dart';
-import 'manager_notifications_screen.dart'; // Import ManagerNotificationsScreen
-import '../services/auth_service.dart'; // AuthService import
+import 'manager_notifications_screen.dart';
+import 'bill_screen.dart'; // Import BillScreen
+import '../services/auth_service.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -15,7 +16,7 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   final AuthService _authService = AuthService(Supabase.instance.client);
   String _sessionId = DateTime.now().millisecondsSinceEpoch.toString();
-  bool isManager = false; // Flag to check if user is a manager
+  bool isManager = false;
 
   @override
   void initState() {
@@ -27,9 +28,9 @@ class _HomePageState extends State<HomePage> {
     final user = Supabase.instance.client.auth.currentUser;
     if (user != null && user.id != null) {
       final response = await Supabase.instance.client
-          .from('profiles') // Adjust table name based on your database
+          .from('profiles')
           .select('role')
-          .eq('id', user.id!) // Ensure user.id is not null
+          .eq('id', user.id!)
           .single();
 
       if (response != null && response['role'] == 'manager') {
@@ -60,10 +61,12 @@ class _HomePageState extends State<HomePage> {
   List<Widget> get _widgetOptions => [
     ChatScreen(sessionId: _sessionId),
     HistoryScreen(),
+    BillScreen(),
     ProfileScreen(),
+     // New Bill Page
   ];
 
-  final List<String> _appBarTitles = ['Chat', 'History', 'Profile'];
+  final List<String> _appBarTitles = ['Chat', 'History', 'Profile', 'Bill'];
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +74,7 @@ class _HomePageState extends State<HomePage> {
       onWillPop: () async {
         if (_selectedIndex > 0) {
           setState(() {
-            _selectedIndex = 0; // Navigate back to Chat screen
+            _selectedIndex = 0;
           });
           return false;
         }
@@ -81,7 +84,7 @@ class _HomePageState extends State<HomePage> {
         appBar: AppBar(
           title: Text(_appBarTitles[_selectedIndex]),
           actions: [
-            if (isManager) // Show only if user is a manager
+            if (isManager)
               IconButton(
                 icon: const Icon(Icons.notifications),
                 onPressed: () {
@@ -112,9 +115,14 @@ class _HomePageState extends State<HomePage> {
               label: 'History',
             ),
             BottomNavigationBarItem(
+              icon: Icon(Icons.receipt),
+              label: 'Bill', // New Bill Button
+            ),
+            BottomNavigationBarItem(
               icon: Icon(Icons.account_circle),
               label: 'Profile',
             ),
+
           ],
         ),
       ),
