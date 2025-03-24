@@ -55,5 +55,9 @@ flutter:
     - assets/default_profile.png
     - assets/Google.png
     - assets/invoice_template.jpg
+    - assets/atomberg_logo.png
+    - assets/electrolyte_logo.jpeg
+    - assets/qr_code.png
+    - assets/stamp.png
   uses-material-design: true
 
