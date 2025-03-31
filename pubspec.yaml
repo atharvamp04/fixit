@@ -21,7 +21,7 @@ dependencies:
   http: ^1.0.0
   bubble: ^1.2.1
   flutter_animate: ^4.5.2
-  mailer: ^6.0.1
+  mailer: ^6.2.0
   flutter_launcher_icons: ^0.14.3
   pdf: ^3.10.4
   printing: ^5.11.0
@@ -59,5 +59,10 @@ flutter:
     - assets/electrolyte_logo.jpeg
     - assets/qr_code.png
     - assets/stamp.png
+    - assets/fonts/Roboto-Regular.ttf
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf
   uses-material-design: true
 
