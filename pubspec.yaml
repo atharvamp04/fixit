@@ -25,6 +25,12 @@ dependencies:
   flutter_launcher_icons: ^0.14.3
   pdf: ^3.10.4
   printing: ^5.11.0
+  flutter_barcode_scanner: ^2.0.0
+  mobile_scanner: ^3.2.0
+  easy_localization: ^3.0.3
+
+
+
 
 dev_dependencies:
   flutter_test:
@@ -52,6 +58,7 @@ flutter_icons:
 
 flutter:
   assets:
+    - assets/langs/
     - assets/default_profile.png
     - assets/Google.png
     - assets/invoice_template.jpg

@@ -8,6 +8,8 @@ import 'bill_screen.dart'; // Import BillScreen
 import '../services/auth_service.dart';
 
 class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -26,11 +28,11 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _checkUserRole() async {
     final user = Supabase.instance.client.auth.currentUser;
-    if (user != null && user.id != null) {
+    if (user != null && user.id.isNotEmpty) {
       final response = await Supabase.instance.client
           .from('profiles')
           .select('role')
-          .eq('id', user.id!)
+          .eq('id', user.id)
           .single();
 
       if (response != null && response['role'] == 'manager') {
@@ -44,11 +46,15 @@ class _HomePageState extends State<HomePage> {
   Future<void> signOut() async {
     try {
       await _authService.signOut();
-      Navigator.pushReplacementNamed(context, '/login');
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error signing out: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error signing out: $e')),
+        );
+      }
     }
   }
 
@@ -58,15 +64,57 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  List<Widget> get _widgetOptions => [
-    ChatScreen(sessionId: _sessionId),
-    HistoryScreen(),
-    BillScreen(),
-    ProfileScreen(),
-     // New Bill Page
-  ];
+  List<Widget> get _widgetOptions {
+    final basePages = [
+      ChatScreen(sessionId: _sessionId),
+      HistoryScreen(),
+      BillScreen(),
+      const ProfileScreen(),
+    ];
+    if (isManager) {
+      basePages.add(ManagerNotificationsScreen());
+    }
+    return basePages;
+  }
 
-  final List<String> _appBarTitles = ['Chat', 'History', 'Profile', 'Bill'];
+  List<BottomNavigationBarItem> get _bottomNavItems {
+    final baseItems = const [
+      BottomNavigationBarItem(
+        icon: Icon(Icons.chat),
+        label: 'Chat',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.history),
+        label: 'History',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.receipt),
+        label: 'Bill',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.account_circle),
+        label: 'Profile',
+      ),
+    ];
+    if (isManager) {
+      return [
+        ...baseItems,
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.notifications),
+          label: 'Alerts',
+        ),
+      ];
+    }
+    return baseItems;
+  }
+
+  List<String> get _appBarTitles {
+    final titles = ['Chat', 'History', 'Bill', 'Profile'];
+    if (isManager) {
+      titles.add('Notifications');
+    }
+    return titles;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,49 +129,18 @@ class _HomePageState extends State<HomePage> {
         return true;
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(_appBarTitles[_selectedIndex]),
-          actions: [
-            if (isManager)
-              IconButton(
-                icon: const Icon(Icons.notifications),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ManagerNotificationsScreen(),
-                    ),
-                  );
-                },
-              ),
-          ],
+        // Removed AppBar completely
+        body: SafeArea(
+          child: _widgetOptions[_selectedIndex],
         ),
-        body: _widgetOptions[_selectedIndex],
         bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
-          selectedItemColor: Color(0xFFEFE516),
+          selectedItemColor: const Color(0xFFEFE516),
           unselectedItemColor: Colors.grey,
           showUnselectedLabels: true,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.chat),
-              label: 'Chat',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.history),
-              label: 'History',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.receipt),
-              label: 'Bill', // New Bill Button
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.account_circle),
-              label: 'Profile',
-            ),
-
-          ],
+          items: _bottomNavItems,
         ),
       ),
     );

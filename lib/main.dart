@@ -1,32 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:easy_localization/easy_localization.dart';
+
 import 'screens/home_page.dart';
 import 'screens/login_page.dart';
 import 'screens/signup_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
 
-  // Initialize Supabase (configuration remains untouched)
   await Supabase.initialize(
-    url: 'https://siwidxwgojsyyenzaena.supabase.co', // Supabase URL
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpd2lkeHdnb2pzeXllbnphZW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY2MTY2NzksImV4cCI6MjA1MjE5MjY3OX0.s1uzCefy3VJC2DfNPdBeWWqmOm46KGXDZE9nYBfH3hY', // Supabase Anon Key
+    url: 'https://siwidxwgojsyyenzaena.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpd2lkeHdnb2pzeXllbnphZW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY2MTY2NzksImV4cCI6MjA1MjE5MjY3OX0.s1uzCefy3VJC2DfNPdBeWWqmOm46KGXDZE9nYBfH3hY',
   );
 
-  runApp(MyApp());
+  runApp(
+    EasyLocalization(
+      supportedLocales: const [Locale('en'), Locale('hi')],
+      path: 'assets/langs',
+      fallbackLocale: const Locale('en'),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Chatbot App',
+      title: 'FixIt',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      // Initial route set to login
-      initialRoute: '/login',
+      locale: context.locale,
+      supportedLocales: context.supportedLocales,
+      localizationsDelegates: context.localizationDelegates,
+      initialRoute: '/',
       onGenerateRoute: _generateRoute,
     );
   }
@@ -34,21 +48,20 @@ class MyApp extends StatelessWidget {
   Route<dynamic> _generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case '/':
-        return MaterialPageRoute(builder: (_) => AuthChecker());
+        return MaterialPageRoute(builder: (_) =>  AuthChecker());
       case '/home':
-        return MaterialPageRoute(builder: (_) => HomePage());
+        return MaterialPageRoute(builder: (_) =>  HomePage());
       case '/login':
-        return MaterialPageRoute(builder: (_) => LoginPage());
+        return MaterialPageRoute(builder: (_) => const LoginPage());
       case '/signup':
-        return MaterialPageRoute(builder: (_) => SignupPage());
+        return MaterialPageRoute(builder: (_) => const SignupPage());
       default:
-      // Fallback route for undefined routes
         return MaterialPageRoute(
           builder: (_) => Scaffold(
             body: Center(
               child: Text(
-                '404: Page Not Found',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                'not_found'.tr(),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -58,6 +71,7 @@ class MyApp extends StatelessWidget {
 }
 
 class AuthChecker extends StatelessWidget {
+   AuthChecker({super.key});
   final SupabaseClient supabaseClient = Supabase.instance.client;
 
   @override
@@ -66,10 +80,8 @@ class AuthChecker extends StatelessWidget {
       stream: supabaseClient.auth.onAuthStateChange,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -77,8 +89,8 @@ class AuthChecker extends StatelessWidget {
           return Scaffold(
             body: Center(
               child: Text(
-                'Error: ${snapshot.error}',
-                style: TextStyle(fontSize: 16, color: Colors.red),
+                '${'error'.tr()}: ${snapshot.error}',
+                style: const TextStyle(fontSize: 16, color: Colors.red),
               ),
             ),
           );
@@ -87,12 +99,11 @@ class AuthChecker extends StatelessWidget {
         if (snapshot.hasData && snapshot.data != null) {
           final user = snapshot.data!.session?.user;
           if (user != null) {
-            return HomePage(); // Navigate to home if the user is logged in
+            return  HomePage(); // Logged in
           }
         }
 
-        // Navigate to login if not authenticated
-        return LoginPage();
+        return const LoginPage(); // Not logged in
       },
     );
   }

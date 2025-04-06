@@ -4,6 +4,9 @@ import 'package:printing/printing.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pdf_generator.dart';
 import 'package:fixit/services/bill_email_service.dart';
+import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import '../widgets/bill_summary_bottom_sheet.dart';
+
 
 class BillScreen extends StatefulWidget {
   @override
@@ -158,17 +161,21 @@ class _BillScreenState extends State<BillScreen> {
     }
 
     double subTotal = selectedProducts.fold(0.0, (sum, product) {
-      String cleanedPrice = product['customer_price'].replaceAll(RegExp(r'[^0-9.]'), '');
-      double price = double.tryParse(cleanedPrice) ?? 0.0;
-      return sum + price;
+      final String cleanedPrice = product['customer_price'].toString().replaceAll(RegExp(r'[^0-9.]'), '');
+      final double price = double.tryParse(cleanedPrice) ?? 0.0;
+      final int quantity = int.tryParse(product['quantity'].toString()) ?? 1;
+      return sum + (price * quantity);
     });
+
+
+
     double finalTotal = subTotal + serviceCharge;
 
     final dynamic orderResponse = await supabase.from('orders').insert({
       'invoice_no': invoiceNumber,
       'brand': selectedBrand,
-      'product_code': selectedProducts.map((p) => p['product_code']).join(', '),
-      'description': selectedProducts.map((p) => p['product_description']).join(', '),
+      'product_code': selectedProducts.map((p) => "${p['product_code']} (x${p['quantity']})").join(', '),
+      'description': selectedProducts.map((p) => "${p['product_description']} (x${p['quantity']})").join(', '),
       'tech_name': userNameController.text,
       'amount': subTotal,
       'service_charge': serviceCharge,
@@ -213,6 +220,62 @@ class _BillScreenState extends State<BillScreen> {
     }
   }
 
+  void showBillSummaryBottomSheet(
+      BuildContext context,
+      double subTotal,
+      List<Map<String, dynamic>> productList,
+      TextEditingController serviceChargeController,
+      VoidCallback onConfirmDownload,
+      ValueChanged<bool> onConsentChanged,
+      ) {
+    double parsedServiceCharge = double.tryParse(serviceChargeController.text) ?? 0.0;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => BillSummaryBottomSheet(
+        subtotal: subTotal,
+        serviceCharge: parsedServiceCharge, // from TextField
+        selectedProducts: productList,
+        onConsentChanged: onConsentChanged,
+        onConfirmDownload: onConfirmDownload,
+      ),
+    );
+  }
+
+
+
+
+
+  Widget _buildStyledField(
+      String label,
+      IconData icon,
+      TextEditingController controller, {
+        bool readOnly = false,
+        bool enabled = true,
+        TextInputType keyboardType = TextInputType.text,
+      }) {
+    return TextFormField(
+      controller: controller,
+      readOnly: readOnly,
+      enabled: enabled,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: 'Enter $label',
+        suffixIcon: Icon(icon, color: const Color(0xFFEFE516)),
+        focusedBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(color: Color(0xFFEFE516)),
+        ),
+      ),
+    );
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -228,47 +291,89 @@ class _BillScreenState extends State<BillScreen> {
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTextField("Invoice Number", Icons.confirmation_number, invoiceNumberController, readOnly: true, enabled: false),
-                  const SizedBox(height: 12),
-                  _buildTextField("User Name", Icons.person, userNameController),
-                  const SizedBox(height: 12),
-                  _buildTextField("Customer Email", Icons.email, customerEmailController, keyboardType: TextInputType.emailAddress),
-                  const SizedBox(height: 12),
-                  _buildBrandDropdown(),
-                  const SizedBox(height: 12),
-                  _buildDropdownField(),
-                  const SizedBox(height: 12),
-                  _buildSelectedProductsList(),
-                  const SizedBox(height: 12),
-                  _buildTextField("Serial Number", Icons.tag, serialNumberController),
-                  const SizedBox(height: 12),
-                  _buildTextField("Service Charge", Icons.attach_money, serviceChargeController, keyboardType: TextInputType.number),
-                  const SizedBox(height: 12),
-                  CheckboxListTile(
-                    title: const Text("I confirm that the invoice details are correct."),
-                    value: technicianConsent,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        technicianConsent = value ?? false;
-                      });
-                    },
-                    controlAffinity: ListTileControlAffinity.leading,
+                  const Text(
+                    'Create Invoice 🧾',
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 20),
-                  Center(
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Fill in the details below to generate the invoice.',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 30),
+
+                  _buildStyledField("Invoice Number", Icons.confirmation_number, invoiceNumberController, readOnly: true, enabled: false),
+                  const SizedBox(height: 16),
+                  _buildStyledField("User Name", Icons.person, userNameController),
+                  const SizedBox(height: 16),
+                  _buildStyledField("Customer Email", Icons.email, customerEmailController, keyboardType: TextInputType.emailAddress),
+                  const SizedBox(height: 16),
+
+                  _buildBrandDropdown(), // Keep dropdown styling inside this method
+                  const SizedBox(height: 16),
+
+                  _buildProductSearchField(),
+                  const SizedBox(height: 16),
+
+                  _buildSelectedProductsList(),
+                  const SizedBox(height: 16),
+
+                  _buildStyledField("Serial Number", Icons.tag, serialNumberController),
+                  const SizedBox(height: 16),
+
+                  _buildStyledField("Service Charge", Icons.attach_money, serviceChargeController, keyboardType: TextInputType.number),
+                  const SizedBox(height: 30),
+
+                  SizedBox(
+                    width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: isLoading ? null : handleGenerateInvoice,
+                      onPressed: isLoading
+                          ? null
+                          : () {
+                        double subTotal = selectedProducts.fold(0.0, (sum, product) {
+                          final String cleanedPrice = product['customer_price'].toString().replaceAll(RegExp(r'[^0-9.]'), '');
+                          final double price = double.tryParse(cleanedPrice) ?? 0.0;
+                          final int quantity = int.tryParse(product['quantity'].toString()) ?? 1;
+                          return sum + (price * quantity);
+                        });
+
+                        showBillSummaryBottomSheet(
+                          context,
+                          subTotal,
+                          selectedProducts,
+                          serviceChargeController,
+                          handleGenerateInvoice,
+                              (bool value) {
+                            setState(() {
+                              technicianConsent = value;
+                            });
+                          },
+                        );
+
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFEFE516),
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30.0),
+                        ),
+                        elevation: 5,
+                        shadowColor: Colors.black.withOpacity(0.3),
+                      ),
                       child: isLoading
                           ? const CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       )
-                          : const Text("Generate Invoice"),
+                          : const Text(
+                        "View Summary",
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
                     ),
                   ),
                 ],
@@ -278,12 +383,11 @@ class _BillScreenState extends State<BillScreen> {
           if (isLoading)
             Container(
               color: Colors.black.withOpacity(0.5),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
+              child: const Center(child: CircularProgressIndicator()),
             ),
         ],
       ),
+
     );
   }
 
@@ -313,35 +417,73 @@ class _BillScreenState extends State<BillScreen> {
     );
   }
 
-  Widget _buildDropdownField() {
+  Widget _buildProductSearchField() {
+    TextEditingController _searchController = TextEditingController();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Select Product"),
-        DropdownButtonFormField<String>(
-          value: selectedProductCode,
-          isExpanded: true,
-          decoration: const InputDecoration(border: OutlineInputBorder()),
-          items: productList.map((product) {
-            return DropdownMenuItem<String>(
-              value: product['product_code'],
-              child: Text(
-                  "${product['product_name']} (${product['product_code']}) - ${product['product_description']}"
+        const Text("Search Product"),
+        Autocomplete<Map<String, dynamic>>(
+          displayStringForOption: (product) =>
+          "${product['product_name']} (${product['product_code']})",
+          optionsBuilder: (TextEditingValue textEditingValue) {
+            if (textEditingValue.text.isEmpty) {
+              return const Iterable<Map<String, dynamic>>.empty();
+            }
+            return productList.where((product) =>
+            product['product_name'].toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
+                product['product_code'].toLowerCase().contains(textEditingValue.text.toLowerCase()));
+          },
+          onSelected: (Map<String, dynamic> selectedProduct) {
+            _searchController.clear(); // clear field after selection
+            addProductToList(selectedProduct);
+          },
+          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+            _searchController = controller;
+            return TextFormField(
+              controller: controller,
+              focusNode: focusNode,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                hintText: "Type product name or code",
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.qr_code_scanner),
+                  onPressed: () async {
+                    String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+                      "#ff6666", // scanner line color
+                      "Cancel",  // cancel button text
+                      true,      // show flash icon
+                      ScanMode.BARCODE,
+                    );
+
+                    if (barcodeScanRes != '-1') {
+                      controller.text = barcodeScanRes;
+
+                      final match = productList.firstWhere(
+                            (product) =>
+                        product['product_code'].toString().toLowerCase() ==
+                            barcodeScanRes.toLowerCase(),
+                        orElse: () => {},
+                      );
+
+                      if (match.isNotEmpty) {
+                        addProductToList(match);
+                        controller.clear();
+                      }
+                    }
+                  },
+                ),
               ),
             );
-          }).toList(),
-          onChanged: (value) {
-            setState(() {
-              selectedProductCode = value;
-              var selectedProduct = productList.firstWhere((product) => product['product_code'] == value);
-              addProductToList(selectedProduct);
-            });
           },
-          validator: (value) => value == null ? "Please select a product" : null,
         ),
       ],
     );
   }
+
+
 
   Widget _buildSelectedProductsList() {
     return Column(
@@ -354,17 +496,48 @@ class _BillScreenState extends State<BillScreen> {
           itemCount: selectedProducts.length,
           itemBuilder: (context, index) {
             var product = selectedProducts[index];
-            return ListTile(
-              title: Text("${product['product_name']} (${product['product_code']})"),
-              subtitle: Text("${product['product_description']}"),
-              trailing: Text("₹${product['customer_price']}"),
-              leading: IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () {
-                  setState(() {
-                    selectedProducts.removeAt(index);
-                  });
-                },
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 6),
+              child: ListTile(
+                title: Text("${product['product_name']} (${product['product_code']})"),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("₹${product['customer_price']}"),
+                    Row(
+                      children: [
+                        const Text("Qty: "),
+                        IconButton(
+                          icon: const Icon(Icons.remove),
+                          onPressed: () {
+                            setState(() {
+                              product['quantity'] = ((product['quantity'] ?? 1) > 1)
+                                  ? (product['quantity'] ?? 1) - 1
+                                  : 1;
+                            });
+                          },
+                        ),
+                        Text((product['quantity'] ?? 1).toString()),
+                        IconButton(
+                          icon: const Icon(Icons.add),
+                          onPressed: () {
+                            setState(() {
+                              product['quantity'] = (product['quantity'] ?? 1) + 1;
+                            });
+                          },
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () {
+                    setState(() {
+                      selectedProducts.removeAt(index);
+                    });
+                  },
+                ),
               ),
             );
           },
@@ -372,6 +545,8 @@ class _BillScreenState extends State<BillScreen> {
       ],
     );
   }
+
+
 
   Widget _buildTextField(String label, IconData icon, TextEditingController controller,
       {TextInputType keyboardType = TextInputType.text, bool readOnly = false, bool enabled = true}) {
@@ -388,4 +563,9 @@ class _BillScreenState extends State<BillScreen> {
       validator: (value) => value == null || value.isEmpty ? "Enter $label" : null,
     );
   }
+
+
 }
+
+
+

@@ -4,10 +4,12 @@ import 'package:intl/intl.dart';
 
 class ManagerNotificationsScreen extends StatefulWidget {
   @override
-  _ManagerNotificationsScreenState createState() => _ManagerNotificationsScreenState();
+  _ManagerNotificationsScreenState createState() =>
+      _ManagerNotificationsScreenState();
 }
 
-class _ManagerNotificationsScreenState extends State<ManagerNotificationsScreen> {
+class _ManagerNotificationsScreenState
+    extends State<ManagerNotificationsScreen> {
   List<Map<String, dynamic>> _notifications = [];
   bool _isLoading = true;
 
@@ -18,7 +20,20 @@ class _ManagerNotificationsScreenState extends State<ManagerNotificationsScreen>
   }
 
   Future<void> _loadNotifications() async {
-    final notifications = await fetchManagerNotifications();
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      print('❌ No authenticated user');
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    final managerId = user.id; // UUID of the manager
+    final notifications = await fetchManagerNotifications(managerId);
+
+    if (!mounted) return;
+
     setState(() {
       _notifications = notifications;
       _isLoading = false;
@@ -32,7 +47,8 @@ class _ManagerNotificationsScreenState extends State<ManagerNotificationsScreen>
         .eq('id', notificationId);
 
     setState(() {
-      _notifications.removeWhere((notification) => notification['id'] == notificationId);
+      _notifications
+          .removeWhere((notification) => notification['id'] == notificationId);
     });
   }
 
@@ -47,9 +63,11 @@ class _ManagerNotificationsScreenState extends State<ManagerNotificationsScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.notifications_off, size: 60, color: Colors.grey),
+            Icon(Icons.notifications_off,
+                size: 60, color: Colors.grey),
             SizedBox(height: 10),
-            Text('No new notifications', style: TextStyle(fontSize: 18, color: Colors.grey)),
+            Text('No new notifications',
+                style: TextStyle(fontSize: 18, color: Colors.grey)),
           ],
         ),
       )
@@ -62,12 +80,13 @@ class _ManagerNotificationsScreenState extends State<ManagerNotificationsScreen>
 
           return Dismissible(
             key: Key(notification['id']),
-            direction: DismissDirection.endToStart, // Swipe left to dismiss
+            direction: DismissDirection.endToStart,
             background: Container(
               alignment: Alignment.centerRight,
               padding: EdgeInsets.symmetric(horizontal: 20),
               color: Colors.green,
-              child: Icon(Icons.check, color: Colors.white, size: 30),
+              child:
+              Icon(Icons.check, color: Colors.white, size: 30),
             ),
             onDismissed: (direction) {
               _markAsRead(notification['id']);
@@ -78,17 +97,56 @@ class _ManagerNotificationsScreenState extends State<ManagerNotificationsScreen>
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: ListTile(
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                title: Text(notification['message'], style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                subtitle: Text(formattedDate, style: TextStyle(color: Colors.grey[600])),
-                leading: Icon(Icons.notifications, color: Color(0xFFEFE516)),
-                trailing: IconButton(
-                  icon: Icon(Icons.check, color: Colors.green),
-                  onPressed: () => _markAsRead(notification['id']),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      notification['message'],
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 5),
+                    Text(formattedDate, style: TextStyle(color: Colors.grey[600])),
+                    if (notification['requested_by']?['full_name'] != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Text(
+                          'Requested by: ${notification['requested_by']['full_name']}',
+                          style: TextStyle(
+                              color: Colors.grey[700], fontStyle: FontStyle.italic),
+                        ),
+                      ),
+                    SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            // Accept button pressed (no functionality yet)
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                          ),
+                          child: Text('Accept'),
+                        ),
+                        SizedBox(width: 10),
+                        ElevatedButton(
+                          onPressed: () {
+                            // Reject button pressed (no functionality yet)
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                          ),
+                          child: Text('Reject'),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
+
           );
         },
       ),
@@ -96,16 +154,21 @@ class _ManagerNotificationsScreenState extends State<ManagerNotificationsScreen>
   }
 }
 
-Future<List<Map<String, dynamic>>> fetchManagerNotifications() async {
-  final user = Supabase.instance.client.auth.currentUser;
-  if (user == null) return [];
+Future<List<Map<String, dynamic>>> fetchManagerNotifications(
+    String managerId) async {
+  final supabase = Supabase.instance.client;
 
-  final response = await Supabase.instance.client
+  final result = await supabase
       .from('notifications')
-      .select('*')
-      .eq('manager_id', user.id)
-      .eq('is_read', false)
-      .order('created_at', ascending: false);
+      .select('id, message, created_at, requested_by(full_name)')
+      .eq('manager_id', managerId)
+      .eq('is_read', false) // Optional: only unread notifications
+      .order('created_at', ascending: false); // Optional: latest first
 
-  return response;
+  if (result is List) {
+    return result.cast<Map<String, dynamic>>();
+  } else {
+    print('❌ Failed to fetch notifications');
+    return [];
+  }
 }

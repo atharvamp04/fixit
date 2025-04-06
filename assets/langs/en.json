@@ -1,0 +1,22 @@
+{
+  "title": "FixIt",
+  "login": "Login",
+  "signup": "Sign Up",
+  "welcome": "Welcome to FixIt",
+  "error": "Error",
+  "welcome_back": "Welcome back 👋",
+  "enter_email_password": "Please enter your email and password to log in.",
+  "email": "Email",
+  "enter_email": "Enter your email",
+  "password": "Password",
+  "enter_password": "Enter your password",
+  "remember_me": "Remember me",
+  "login": "Login",
+  "or": "OR",
+  "login_google": "Log in with Google",
+  "signup_prompt": "Don’t have an account? Sign up here.",
+  "login_failed": "Login failed: Your account may not exist or is pending admin approval.",
+  "google_error": "Google Sign-In error: {}",
+  "error": "Error: {}",
+  "missing_fields": "Please enter email and password"
+}

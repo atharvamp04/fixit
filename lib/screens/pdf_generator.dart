@@ -122,13 +122,16 @@ Future<Uint8List> generatePdf({
                     pw.Table.fromTextArray(
                       headers: ["DESCRIPTION", "QUANTITY", "RATE (incl. tax)", "AMOUNT"],
                       data: selectedProducts.map((product) {
-                        String cleanedPrice = product['customer_price'].replaceAll(RegExp(r'[^0-9.]'), '');
-                        double price = double.tryParse(cleanedPrice) ?? 0.0;
+                        final String cleanedPrice = product['customer_price'].replaceAll(RegExp(r'[^0-9.]'), '');
+                        final double price = double.tryParse(cleanedPrice) ?? 0.0;
+                        final int quantity = product['quantity'] ?? 1;
+                        final double total = price * quantity;
+
                         return [
                           product['product_description'],
-                          "1",
+                          "$quantity",
                           "Rs.${price.toStringAsFixed(2)}",
-                          "Rs.${price.toStringAsFixed(2)}",
+                          "Rs.${total.toStringAsFixed(2)}",
                         ];
                       }).toList(),
                       border: pw.TableBorder.all(),
@@ -142,6 +145,7 @@ Future<Uint8List> generatePdf({
                         3: pw.FlexColumnWidth(),
                       },
                     ),
+
                     pw.SizedBox(height: 20),
                     pw.Divider(),
                     // Totals.
@@ -154,6 +158,7 @@ Future<Uint8List> generatePdf({
                           pw.Text("SERVICE CHARGE: Rs.${serviceCharge.toStringAsFixed(2)}", style: pw.TextStyle(fontSize: 12)),
                           pw.Text("GRAND TOTAL: Rs.${finalTotal.toStringAsFixed(2)}",
                               style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+
                         ],
                       ),
                     ),
