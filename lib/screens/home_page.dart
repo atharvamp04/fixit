@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart'; // 👈 Add this import
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'chat_screen.dart';
 import 'history_screen.dart';
 import 'profile_screen.dart';
 import 'manager_notifications_screen.dart';
 import 'user_notifications_screen.dart';
-import 'bill_screen.dart'; // Import BillScreen
+import 'bill_screen.dart';
 import '../services/auth_service.dart';
 
 class HomePage extends StatefulWidget {
@@ -31,7 +32,7 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error signing out: $e')),
+          SnackBar(content: Text('error_signing_out'.tr(args: [e.toString()]))),
         );
       }
     }
@@ -49,12 +50,11 @@ class _HomePageState extends State<HomePage> {
     _getUserRole();
   }
 
-  // Method to fetch user role from the database
   Future<void> _getUserRole() async {
     final user = Supabase.instance.client.auth.currentUser;
     if (user != null) {
       final response = await Supabase.instance.client
-          .from('profiles') // Assuming 'users' table holds user data
+          .from('profiles')
           .select('role')
           .eq('id', user.id)
           .single();
@@ -63,8 +63,6 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           userRole = response['role'];
         });
-
-        // Debugging: Log the fetched role
         print('Fetched role: $userRole');
       } else {
         print('❌ Role not found or empty');
@@ -73,40 +71,38 @@ class _HomePageState extends State<HomePage> {
   }
 
   List<Widget> get _widgetOptions {
-    // Check the role and load the appropriate screen
     return [
       ChatScreen(sessionId: _sessionId),
       HistoryScreen(),
       BillScreen(),
       const ProfileScreen(),
-      // Show appropriate screen based on the user role
-      userRole == 'manager' // Check for exact match
+      userRole == 'manager'
           ? ManagerNotificationsScreen()
           : UserNotificationsScreen(),
     ];
   }
 
   List<BottomNavigationBarItem> get _bottomNavItems {
-    return const [
+    return [
       BottomNavigationBarItem(
-        icon: Icon(Icons.chat),
-        label: 'Chat',
+        icon: const Icon(Icons.chat),
+        label: 'chat'.tr(),
       ),
       BottomNavigationBarItem(
-        icon: Icon(Icons.history),
-        label: 'History',
+        icon: const Icon(Icons.history),
+        label: 'history'.tr(),
       ),
       BottomNavigationBarItem(
-        icon: Icon(Icons.receipt),
-        label: 'Bill',
+        icon: const Icon(Icons.receipt),
+        label: 'bill'.tr(),
       ),
       BottomNavigationBarItem(
-        icon: Icon(Icons.account_circle),
-        label: 'Profile',
+        icon: const Icon(Icons.account_circle),
+        label: 'profile'.tr(),
       ),
       BottomNavigationBarItem(
-        icon: Icon(Icons.notifications),
-        label: 'Alerts',
+        icon: const Icon(Icons.notifications),
+        label: 'alerts'.tr(),
       ),
     ];
   }
@@ -126,7 +122,7 @@ class _HomePageState extends State<HomePage> {
       child: Scaffold(
         body: SafeArea(
           child: userRole == null
-              ? Center(child: CircularProgressIndicator()) // Show loading until the role is fetched
+              ? const Center(child: CircularProgressIndicator())
               : _widgetOptions[_selectedIndex],
         ),
         bottomNavigationBar: BottomNavigationBar(

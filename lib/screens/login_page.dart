@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:fixit/services/auth_service.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
-
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -13,7 +13,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
   final FocusNode _emailFocusNode = FocusNode();
   final FocusNode _passwordFocusNode = FocusNode();
 
@@ -27,7 +26,7 @@ class _LoginPageState extends State<LoginPage> {
 
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter email and password')),
+        SnackBar(content: Text('missing_fields'.tr())),
       );
       return;
     }
@@ -42,16 +41,12 @@ class _LoginPageState extends State<LoginPage> {
         Navigator.pushReplacementNamed(context, '/home');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Login failed: Your account may not exist or is pending admin approval.',
-            ),
-          ),
+          SnackBar(content: Text('login_failed'.tr())),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text('${'error'.tr()}: $e')),
       );
     } finally {
       setState(() {
@@ -65,11 +60,8 @@ class _LoginPageState extends State<LoginPage> {
       _isLoading = true;
     });
 
-    // Replace with your own Web and iOS client IDs.
-    const String webClientId =
-        '420646018313-4iql2ugkb2s080g1cgbansvugmqnql1k.apps.googleusercontent.com';
-    const String iosClientId =
-        '420646018313-onbp2q23jm6f7j26ipp2nl1sgeassoki.apps.googleusercontent.com';
+    const String webClientId = '420646018313-4iql2ugkb2s080g1cgbansvugmqnql1k.apps.googleusercontent.com';
+    const String iosClientId = '420646018313-onbp2q23jm6f7j26ipp2nl1sgeassoki.apps.googleusercontent.com';
 
     final GoogleSignIn googleSignIn = GoogleSignIn(
       clientId: iosClientId,
@@ -78,33 +70,27 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final googleUser = await googleSignIn.signIn();
-      if (googleUser == null) {
-        throw 'Google Sign-In canceled.';
-      }
+      if (googleUser == null) throw 'Google Sign-In canceled.';
 
       final googleAuth = await googleUser.authentication;
-      final String? idToken = googleAuth.idToken;
-      final String? accessToken = googleAuth.accessToken;
+      final idToken = googleAuth.idToken;
+      final accessToken = googleAuth.accessToken;
 
       if (idToken == null || accessToken == null) {
         throw 'Failed to retrieve Google tokens.';
       }
 
-      // Sign in with Google using Supabase.
       final response = await Supabase.instance.client.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: idToken,
         accessToken: accessToken,
       );
 
-      if (response.session == null) {
-        throw 'Google Sign-In failed.';
-      }
+      if (response.session == null) throw 'Google Sign-In failed.';
 
       final userId = response.user?.id;
       if (userId == null) throw 'User ID is null after Google Sign-In';
 
-      // Check if the Google user is approved.
       final approved = await _authService.isUserApproved(userId);
       if (!approved) {
         await _authService.signOut();
@@ -114,7 +100,7 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Google Sign-In error: $e')),
+        SnackBar(content: Text('google_error'.tr(args: [e.toString()]))),
       );
     } finally {
       setState(() {
@@ -142,27 +128,19 @@ class _LoginPageState extends State<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 120),
-              const Text(
-                'Welcome back 👋',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-              ),
+              Text('welcome_back'.tr(), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
               const SizedBox(height: 20),
-              const Text(
-                'Please enter your email and password to log in.',
-                style: TextStyle(fontSize: 16),
-              ),
+              Text('enter_email_password'.tr(), style: const TextStyle(fontSize: 16)),
               const SizedBox(height: 20),
               TextField(
                 controller: _emailController,
                 focusNode: _emailFocusNode,
                 decoration: InputDecoration(
-                  labelText: 'Email',
-                  hintText: 'Enter your email',
+                  labelText: 'email'.tr(),
+                  hintText: 'enter_email'.tr(),
                   suffixIcon: Icon(
                     Icons.email,
-                    color: _emailFocusNode.hasFocus
-                        ? const Color(0xFFEFE516)
-                        : Colors.grey,
+                    color: _emailFocusNode.hasFocus ? const Color(0xFFEFE516) : Colors.grey,
                   ),
                   focusedBorder: const UnderlineInputBorder(
                     borderSide: BorderSide(color: Color(0xFFEFE516)),
@@ -175,13 +153,11 @@ class _LoginPageState extends State<LoginPage> {
                 focusNode: _passwordFocusNode,
                 obscureText: true,
                 decoration: InputDecoration(
-                  labelText: 'Password',
-                  hintText: 'Enter your password',
+                  labelText: 'password'.tr(),
+                  hintText: 'enter_password'.tr(),
                   suffixIcon: Icon(
                     Icons.lock,
-                    color: _passwordFocusNode.hasFocus
-                        ? const Color(0xFFEFE516)
-                        : Colors.grey,
+                    color: _passwordFocusNode.hasFocus ? const Color(0xFFEFE516) : Colors.grey,
                   ),
                   focusedBorder: const UnderlineInputBorder(
                     borderSide: BorderSide(color: Color(0xFFEFE516)),
@@ -193,13 +169,9 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   Checkbox(
                     value: _rememberMe,
-                    onChanged: (value) {
-                      setState(() {
-                        _rememberMe = value!;
-                      });
-                    },
+                    onChanged: (value) => setState(() => _rememberMe = value!),
                   ),
-                  const Text('Remember me'),
+                  Text('remember_me'.tr()),
                 ],
               ),
               const SizedBox(height: 20),
@@ -219,35 +191,19 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                      'Login',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                        : Text('login'.tr(), style: const TextStyle(color: Colors.white)),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
               Row(
                 children: [
-                  Expanded(
-                    child: Divider(
-                      color: Colors.grey.shade400,
-                      thickness: 1,
-                    ),
+                  Expanded(child: Divider(color: Colors.grey.shade400)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Text('or'.tr(), style: const TextStyle(fontSize: 16, color: Colors.grey)),
                   ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Text(
-                      'OR',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                  ),
-                  Expanded(
-                    child: Divider(
-                      color: Colors.grey.shade400,
-                      thickness: 1,
-                    ),
-                  ),
+                  Expanded(child: Divider(color: Colors.grey.shade400)),
                 ],
               ),
               const SizedBox(height: 20),
@@ -268,15 +224,9 @@ class _LoginPageState extends State<LoginPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.asset(
-                          'assets/Google.png',
-                          height: 24,
-                        ),
+                        Image.asset('assets/Google.png', height: 24),
                         const SizedBox(width: 10),
-                        const Text(
-                          'Log in with Google',
-                          style: TextStyle(color: Colors.black, fontSize: 16),
-                        ),
+                        Text('login_google'.tr(), style: const TextStyle(color: Colors.black, fontSize: 16)),
                       ],
                     ),
                   ),
@@ -285,15 +235,10 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 20),
               Center(
                 child: TextButton(
-                  onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/signup');
-                  },
-                  child: const Text(
-                    'Don’t have an account? Sign up here.',
-                    style: TextStyle(
-                      color: Color(0xFFEFE516),
-                      fontWeight: FontWeight.bold,
-                    ),
+                  onPressed: () => Navigator.pushReplacementNamed(context, '/signup'),
+                  child: Text(
+                    'signup_prompt'.tr(),
+                    style: const TextStyle(color: Color(0xFFEFE516), fontWeight: FontWeight.bold),
                   ),
                 ),
               ),

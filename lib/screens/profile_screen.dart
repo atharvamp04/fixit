@@ -2,37 +2,48 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:uuid/uuid.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
 
   @override
-  _ProfileScreenState createState() => _ProfileScreenState();
+  State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Profile Fields
-  final TextEditingController _fullNameController = TextEditingController();
-  final TextEditingController _mobileController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _dobController = TextEditingController();
-  final TextEditingController _socialLinksController = TextEditingController();
-  final TextEditingController _genderController = TextEditingController(text: "Male");
+  final _fullNameController = TextEditingController();
+  final _mobileController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _dobController = TextEditingController();
+  final _socialLinksController = TextEditingController();
+  final _genderController = TextEditingController(text: "Male");
 
-  final ImagePicker _picker = ImagePicker();
   final SupabaseClient supabase = Supabase.instance.client;
+  final ImagePicker _picker = ImagePicker();
 
   bool _isLoading = false;
   bool _isImageUploading = false;
   String profilePhotoUrl = "";
+  File? _pickedImageFile;
+
+  Locale _selectedLocale = const Locale('en');
 
   @override
   void initState() {
     super.initState();
     _fetchProfile();
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _selectedLocale = context.locale; // ✅ Safe here
+  }
+
 
   Future<void> _fetchProfile() async {
     final user = supabase.auth.currentUser;
@@ -60,12 +71,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _updateProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     final user = supabase.auth.currentUser;
     if (user == null) return;
+
+    if (_pickedImageFile != null) {
+      await _uploadImageToSupabase(_pickedImageFile!);
+    }
 
     final updates = {
       'full_name': _fullNameController.text,
@@ -81,16 +94,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       await supabase.from('profiles').update(updates).eq('id', user.id);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile updated successfully!')),
+        SnackBar(content: Text(tr('profile_updated'))),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating profile: $e')),
+        SnackBar(content: Text(tr('update_error', args: [e.toString()]))),
       );
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 
@@ -99,42 +110,74 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (pickedFile == null) return;
 
     setState(() {
-      _isImageUploading = true;
+      _pickedImageFile = File(pickedFile.path);
     });
+  }
+
+  Future<void> _uploadImageToSupabase(File imageFile) async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
 
     try {
-      profilePhotoUrl = pickedFile.path; // Upload the image to a cloud service and store its URL.
+      setState(() => _isImageUploading = true);
+
+      final imageBytes = await imageFile.readAsBytes();
+      final imageName = const Uuid().v4();
+
+      final storagePath = 'profile_images/$imageName.jpg';
+
+      await supabase.storage
+          .from('avatars')
+          .uploadBinary(storagePath, imageBytes, fileOptions: const FileOptions(contentType: 'image/jpeg'));
+
+      final publicUrl = supabase.storage.from('avatars').getPublicUrl(storagePath);
+      setState(() => profilePhotoUrl = publicUrl);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Image upload failed: $e')),
+        SnackBar(content: Text(tr('image_upload_failed', args: [e.toString()]))),
       );
     } finally {
-      setState(() {
-        _isImageUploading = false;
-      });
+      setState(() => _isImageUploading = false);
     }
   }
 
   Future<void> _logout() async {
     await supabase.auth.signOut();
-    Navigator.pushReplacementNamed(context, '/login'); // Navigate to the login screen
+    Navigator.pushReplacementNamed(context, '/login');
+  }
+
+  void _changeLanguage(Locale locale) {
+    setState(() => _selectedLocale = locale);
+    context.setLocale(locale);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Profile',
-          style: TextStyle(
-            fontSize: 30,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-          ),
-        ),
-        backgroundColor: Color(0xFFEFE516),
+        title: Text(tr('profile'), style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white)),
+        backgroundColor: const Color(0xFFEFE516),
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12.0),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<Locale>(
+                value: _selectedLocale,
+                dropdownColor: const Color(0xFFEFE516),
+                icon: const Icon(Icons.language, color: Colors.white),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                items: const [
+                  DropdownMenuItem(value: Locale('en'), child: Text("English")),
+                  DropdownMenuItem(value: Locale('hi'), child: Text("हिंदी")),
+                  DropdownMenuItem(value: Locale('mr'), child: Text("मराठी")),
+                ],
+                onChanged: (locale) => _changeLanguage(locale!),
+              ),
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -147,9 +190,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   CircleAvatar(
                     radius: 50,
                     backgroundColor: Colors.grey.shade300,
-                    backgroundImage: profilePhotoUrl.isNotEmpty
-                        ? FileImage(File(profilePhotoUrl)) as ImageProvider
-                        : const AssetImage('assets/default_profile.png'),
+                    backgroundImage: _pickedImageFile != null
+                        ? FileImage(_pickedImageFile!)
+                        : (profilePhotoUrl.isNotEmpty
+                        ? NetworkImage(profilePhotoUrl)
+                        : const AssetImage('assets/default_profile.png') as ImageProvider),
                   ),
                   Positioned(
                     bottom: 0,
@@ -171,17 +216,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               key: _formKey,
               child: Column(
                 children: [
-                  _buildTextField(_fullNameController, "Full Name", Icons.person),
+                  _buildTextField(_fullNameController, tr('full_name'), Icons.person),
                   const SizedBox(height: 10),
-                  _buildTextField(_emailController, "Email", Icons.email, readOnly: true),
+                  _buildTextField(_emailController, tr('email'), Icons.email, readOnly: true),
                   const SizedBox(height: 10),
-                  _buildTextField(_mobileController, "Mobile Number", Icons.phone),
+                  _buildTextField(_mobileController, tr('mobile_number'), Icons.phone),
                   const SizedBox(height: 10),
-                  _buildTextField(_dobController, "Date of Birth", Icons.calendar_today),
+                  _buildTextField(_dobController, tr('dob'), Icons.calendar_today),
                   const SizedBox(height: 10),
-                  _buildTextField(_genderController, "Gender", Icons.person_outline),
+                  _buildTextField(_genderController, tr('gender'), Icons.person_outline),
                   const SizedBox(height: 10),
-                  _buildTextField(_socialLinksController, "Social Links", Icons.link),
+                  _buildTextField(_socialLinksController, tr('social_links'), Icons.link),
                 ],
               ),
             ),
@@ -196,18 +241,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFEFE516),
                         padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30.0),
-                        ),
-                        elevation: 5,
-                        shadowColor: Colors.black.withOpacity(0.3),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
                       ),
                       child: _isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                        'Update Profile',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                          : Text(tr('update_profile'), style: const TextStyle(color: Colors.white)),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -218,16 +256,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
                         padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30.0),
-                        ),
-                        elevation: 5,
-                        shadowColor: Colors.black.withOpacity(0.3),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
                       ),
-                      child: const Text(
-                        'Logout',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      child: Text(tr('logout'), style: const TextStyle(color: Colors.white)),
                     ),
                   ),
                 ],
@@ -239,18 +270,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool readOnly = false}) {
-    return TextField(
+  Widget _buildTextField(
+      TextEditingController controller,
+      String label,
+      IconData icon, {
+        bool readOnly = false,
+      }) {
+    return TextFormField(
       controller: controller,
       readOnly: readOnly,
       decoration: InputDecoration(
         labelText: label,
-        hintText: "Enter $label",
+        hintText: "${tr('enter')} $label",
         prefixIcon: Icon(icon, color: const Color(0xFFEFE516)),
         focusedBorder: const UnderlineInputBorder(
           borderSide: BorderSide(color: Color(0xFFEFE516)),
         ),
       ),
+      validator: (value) {
+        if (!readOnly && (value == null || value.isEmpty)) {
+          return "${tr('please_enter')} $label";
+        }
+        return null;
+      },
     );
   }
 }

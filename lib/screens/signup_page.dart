@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:fixit/services/auth_service.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({Key? key}) : super(key: key);
@@ -295,7 +296,7 @@ class _SignupPageState extends State<SignupPage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Text(
-            'OR',
+            'OR'.tr(),
             style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
           ),
         ),
@@ -309,7 +310,6 @@ class _SignupPageState extends State<SignupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // SingleChildScrollView to handle overflow on small screens.
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
@@ -317,25 +317,25 @@ class _SignupPageState extends State<SignupPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 100),
-              const Text(
-                'Create Account 🎉',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+              Text(
+                'create_account'.tr(),
+                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 15),
-              const Text(
-                'Fill in the details below to sign up.',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+              Text(
+                'fill_details'.tr(),
+                style: const TextStyle(fontSize: 16, color: Colors.grey),
               ),
               const SizedBox(height: 20),
-              _buildTextField(_emailController, 'Email', Icons.email, _emailFocus),
+              _buildTextField(_emailController, 'email'.tr(), Icons.email, _emailFocus),
               const SizedBox(height: 10),
-              _buildTextField(_passwordController, 'Password', Icons.lock, _passwordFocus, obscureText: true),
+              _buildTextField(_passwordController, 'password'.tr(), Icons.lock, _passwordFocus, obscureText: true),
               const SizedBox(height: 10),
-              _buildTextField(_fullNameController, 'Full Name', Icons.person, _fullNameFocus),
+              _buildTextField(_fullNameController, 'full_name'.tr(), Icons.person, _fullNameFocus),
               const SizedBox(height: 10),
-              _buildTextField(_mobileNumberController, 'Mobile Number', Icons.phone, _mobileNumberFocus),
+              _buildTextField(_mobileNumberController, 'mobile_number'.tr(), Icons.phone, _mobileNumberFocus),
               const SizedBox(height: 10),
-              _buildTextField(_genderController, 'Gender', Icons.accessibility, _genderFocus),
+              _buildTextField(_genderController, 'gender'.tr(), Icons.accessibility, _genderFocus),
               const SizedBox(height: 20),
               _buildSignupButton(),
               const SizedBox(height: 20),
@@ -346,14 +346,21 @@ class _SignupPageState extends State<SignupPage> {
               Center(
                 child: TextButton(
                   onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
-                  child: const Text(
-                    'Already have an account? Login',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFEFE516), // Yellow color.
-                    ),
+                  child: Text(
+                    'already_account'.tr(),
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFEFE516)),
                   ),
                 ),
+              ),
+              const SizedBox(height: 20),
+              // Language switch
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(onPressed: () => context.setLocale(const Locale('en')), child: const Text("English"),),
+                  TextButton(onPressed: () => context.setLocale(const Locale('hi')), child: const Text("हिंदी")),
+                  TextButton(onPressed: () => context.setLocale(const Locale('mr')), child: const Text("मराठी")),
+                ],
               )
             ],
           ),

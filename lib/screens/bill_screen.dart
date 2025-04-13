@@ -7,6 +7,7 @@ import 'package:fixit/services/bill_email_service.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../widgets/bill_summary_bottom_sheet.dart';
 import 'package:fixit/widgets/barcode_scanner_screen.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 
 
@@ -278,14 +279,17 @@ class _BillScreenState extends State<BillScreen> {
 
 
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Bill Form"),
+        backgroundColor: Color(0xFFEFE516),
+        title: Text('bill_form.title'.tr(),
+        style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white),),
         actions: [
           IconButton(
-            icon: const Icon(Icons.share),
+            icon: Icon(Icons.share, color: Colors.white),
             onPressed: handleSharePdf,
           )
         ],
@@ -299,39 +303,52 @@ class _BillScreenState extends State<BillScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Create Invoice 🧾',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                  ),
                   const SizedBox(height: 10),
-                  const Text(
-                    'Fill in the details below to generate the invoice.',
+                  Text(
+                    'bill_form.fill_details'.tr(), // Use translation key
                     style: TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 30),
-
-                  _buildStyledField("Invoice Number", Icons.confirmation_number, invoiceNumberController, readOnly: true, enabled: false),
+                  _buildStyledField(
+                    'bill_form.invoice_number'.tr(), // Use translation key
+                    Icons.confirmation_number,
+                    invoiceNumberController,
+                    readOnly: true,
+                    enabled: false,
+                  ),
                   const SizedBox(height: 16),
-                  _buildStyledField("User Name", Icons.person, userNameController),
+                  _buildStyledField(
+                    'bill_form.user_name'.tr(), // Use translation key
+                    Icons.person,
+                    userNameController,
+                  ),
                   const SizedBox(height: 16),
-                  _buildStyledField("Customer Email", Icons.email, customerEmailController, keyboardType: TextInputType.emailAddress),
+                  _buildStyledField(
+                    'bill_form.customer_email'.tr(), // Use translation key
+                    Icons.email,
+                    customerEmailController,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
                   const SizedBox(height: 16),
-
-                  _buildBrandDropdown(), // Keep dropdown styling inside this method
+                  _buildBrandDropdown(),
                   const SizedBox(height: 16),
-
                   _buildProductSearchField(context),
                   const SizedBox(height: 16),
-
                   _buildSelectedProductsList(),
                   const SizedBox(height: 16),
-
-                  _buildStyledField("Serial Number", Icons.tag, serialNumberController),
+                  _buildStyledField(
+                    'bill_form.serial_number'.tr(), // Use translation key
+                    Icons.tag,
+                    serialNumberController,
+                  ),
                   const SizedBox(height: 16),
-
-                  _buildStyledField("Service Charge", Icons.attach_money, serviceChargeController, keyboardType: TextInputType.number),
+                  _buildStyledField(
+                    'bill_form.service_charge'.tr(), // Use translation key
+                    Icons.attach_money,
+                    serviceChargeController,
+                    keyboardType: TextInputType.number,
+                  ),
                   const SizedBox(height: 30),
-
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -357,7 +374,6 @@ class _BillScreenState extends State<BillScreen> {
                             });
                           },
                         );
-
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFEFE516),
@@ -372,8 +388,8 @@ class _BillScreenState extends State<BillScreen> {
                           ? const CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       )
-                          : const Text(
-                        "View Summary",
+                          : Text(
+                        'bill_form.view_summary'.tr(), // Use translation key
                         style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
                     ),
@@ -389,7 +405,6 @@ class _BillScreenState extends State<BillScreen> {
             ),
         ],
       ),
-
     );
   }
 
@@ -397,7 +412,7 @@ class _BillScreenState extends State<BillScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Select Brand"),
+        Text("bill_form.select_brand".tr()), // Use translation key
         DropdownButtonFormField<String>(
           value: selectedBrand,
           isExpanded: true,
@@ -413,7 +428,7 @@ class _BillScreenState extends State<BillScreen> {
               selectedBrand = value;
             });
           },
-          validator: (value) => value == null ? "Please select a brand" : null,
+          validator: (value) => value == null ? "bill_form.select_brand_error".tr() : null, // Use translation key
         ),
       ],
     );
@@ -425,7 +440,7 @@ class _BillScreenState extends State<BillScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Search Product"),
+        Text("bill_form.search_product".tr()), // Use translation key
         Autocomplete<Map<String, dynamic>>(
           displayStringForOption: (product) =>
           "${product['product_name']} (${product['product_code']})",
@@ -452,7 +467,7 @@ class _BillScreenState extends State<BillScreen> {
               focusNode: focusNode,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
-                hintText: "Type product name or code",
+                hintText: "bill_form.search_product_hint".tr(), // Use translation key
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.qr_code_scanner),
@@ -475,8 +490,7 @@ class _BillScreenState extends State<BillScreen> {
                             (product) =>
                         product['product_code']
                             .toString()
-                            .toLowerCase() ==
-                            result.toLowerCase(),
+                            .toLowerCase() == result.toLowerCase(),
                         orElse: () => {},
                       );
 
@@ -495,14 +509,11 @@ class _BillScreenState extends State<BillScreen> {
     );
   }
 
-
-
-
   Widget _buildSelectedProductsList() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Selected Products", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text("bill_form.selected_products".tr(), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -519,7 +530,7 @@ class _BillScreenState extends State<BillScreen> {
                     Text("₹${product['customer_price']}"),
                     Row(
                       children: [
-                        const Text("Qty: "),
+                        Text("Qty: "),
                         IconButton(
                           icon: const Icon(Icons.remove),
                           onPressed: () {

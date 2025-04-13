@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'chat_screen.dart';
+import 'package:easy_localization/easy_localization.dart';
+import './chat_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
   @override
@@ -28,9 +29,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         try {
           List<dynamic> messages = jsonDecode(chatHistoryJson);
 
-          // Ensure messages is a list and has at least one entry
           if (messages.isNotEmpty && messages is List) {
-            // Find the first user message
             var firstUserMessage = messages.firstWhere(
                   (msg) => msg is Map<String, dynamic> && msg["sender"] == "user",
               orElse: () => {"text": "No user messages"},
@@ -87,22 +86,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xFFEFE516),
-        title: Text("History", style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800)),
+        title: Text(
+          "history".tr(),
+          style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800),
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.delete, color: Colors.white),
             onPressed: _clearAllSessions,
+            tooltip: "delete".tr(),
           ),
         ],
       ),
       body: sessions.isEmpty
-          ? Center(child: Text("No chat history available"))
+          ? Center(child: Text("no_history".tr()))
           : ListView.builder(
         padding: EdgeInsets.all(16),
         itemCount: sessions.length,
         itemBuilder: (context, index) {
           return Card(
-            elevation: 4, // Adds a shadow effect
+            elevation: 4,
             margin: EdgeInsets.symmetric(vertical: 8),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -114,7 +117,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 child: Icon(Icons.chat, color: Colors.white),
               ),
               title: Text(
-                "Chat ${index + 1}",
+                "${"chat".tr()} ${index + 1}",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               subtitle: Text(
@@ -130,5 +133,4 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ),
     );
   }
-
 }

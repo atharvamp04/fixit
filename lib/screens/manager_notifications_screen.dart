@@ -152,7 +152,8 @@ class _ManagerNotificationsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Notifications')),
+      appBar: AppBar(title: Text('My Notifications',style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800),),
+        backgroundColor: const Color(0xFFF8F13F),),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
           : _notifications.isEmpty

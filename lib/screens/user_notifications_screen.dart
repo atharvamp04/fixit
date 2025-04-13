@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart'; // Add Easy Localization import
 
 class UserNotificationsScreen extends StatefulWidget {
   @override
@@ -50,7 +51,7 @@ class _UserNotificationsScreenState extends State<UserNotificationsScreen> {
         .order('created_at', ascending: false); // Order by the most recent notification
 
     if (result is List) {
-      return result.cast<Map<String, dynamic>>();
+      return result.cast<Map<String, dynamic>>(); // Cast the result to List<Map<String, dynamic>>
     } else {
       print('❌ Failed to fetch requester alerts');
       return [];
@@ -60,7 +61,17 @@ class _UserNotificationsScreenState extends State<UserNotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('My Notifications')),
+      appBar: AppBar(
+        title: Text(
+          tr('my_notifications'), // Use localized text here
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 30,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        backgroundColor: const Color(0xFFF8F13F),
+      ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
           : _notifications.isEmpty
@@ -71,7 +82,7 @@ class _UserNotificationsScreenState extends State<UserNotificationsScreen> {
             Icon(Icons.notifications_off, size: 60, color: Colors.grey),
             SizedBox(height: 10),
             Text(
-              'No notifications',
+              tr('no_notifications'), // Use localized text here
               style: TextStyle(fontSize: 18, color: Colors.grey),
             ),
           ],
@@ -83,8 +94,6 @@ class _UserNotificationsScreenState extends State<UserNotificationsScreen> {
           final notification = _notifications[index];
 
           final createdAtRaw = notification['created_at'];
-
-
           final message = notification['message'] ?? 'No message';
 
           return Card(
@@ -94,14 +103,11 @@ class _UserNotificationsScreenState extends State<UserNotificationsScreen> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(message,
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(message, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   SizedBox(height: 5),
                 ],
               ),

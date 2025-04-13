@@ -26,7 +26,7 @@ dependencies:
   pdf: ^3.10.4
   printing: ^5.11.0
   flutter_barcode_scanner: ^2.0.0
-  mobile_scanner: ^6.0.7
+  mobile_scanner: ^5.1.1
   easy_localization: ^3.0.3
 
 

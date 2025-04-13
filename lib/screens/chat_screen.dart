@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:easy_localization/easy_localization.dart'; // Import easy_localization
 import '../services/wit_ai_service.dart';
 import '../widgets/product_grid.dart';
 import '../widgets/animated_chat_bubble.dart'; // Animated chat bubbles
@@ -24,11 +25,11 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
 
   final List<String> hintMessages = [
-    "Ask me about products...",
-    "Check stock availability...",
-    "Get product details...",
-    "Find the best options...",
-    "Type your message..."
+    "ask_about_products".tr(),
+    "check_stock".tr(),
+    "get_product_details".tr(),
+    "find_best_options".tr(),
+    "type_message".tr()
   ];
   int hintIndex = 0;
   Timer? _hintTimer;
@@ -154,9 +155,9 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFFF8F13F),
-        title: const Text(
-          "Chats",
-          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white),
+        title: Text(
+          "chat".tr(), // Localization for "Chats"
+          style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white),
         ),
         actions: [
           IconButton(
@@ -192,7 +193,6 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: EdgeInsets.all(8.0),
               child: CircularProgressIndicator(color: Color(0xFFEFE516)),
             ),
-
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: Row(
@@ -205,11 +205,11 @@ class _ChatScreenState extends State<ChatScreen> {
                       hintText: hintMessages[hintIndex],
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15), // Reduced border radius
+                        borderRadius: BorderRadius.circular(30), // Original rounded border
                         borderSide: const BorderSide(color: Colors.grey, width: 1),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15), // Reduced border radius
+                        borderRadius: BorderRadius.circular(30), // Same border radius
                         borderSide: const BorderSide(color: Color(0xFFEFE516), width: 2),
                       ),
                     ),
