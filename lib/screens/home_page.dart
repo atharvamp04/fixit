@@ -4,6 +4,7 @@ import 'chat_screen.dart';
 import 'history_screen.dart';
 import 'profile_screen.dart';
 import 'manager_notifications_screen.dart';
+import 'user_notifications_screen.dart';
 import 'bill_screen.dart'; // Import BillScreen
 import '../services/auth_service.dart';
 
@@ -18,31 +19,9 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   final AuthService _authService = AuthService(Supabase.instance.client);
   String _sessionId = DateTime.now().millisecondsSinceEpoch.toString();
-  bool isManager = false;
+  String? userRole;
 
   @override
-  void initState() {
-    super.initState();
-    _checkUserRole();
-  }
-
-  Future<void> _checkUserRole() async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user != null && user.id.isNotEmpty) {
-      final response = await Supabase.instance.client
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-
-      if (response != null && response['role'] == 'manager') {
-        setState(() {
-          isManager = true;
-        });
-      }
-    }
-  }
-
   Future<void> signOut() async {
     try {
       await _authService.signOut();
@@ -64,21 +43,51 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _getUserRole();
+  }
+
+  // Method to fetch user role from the database
+  Future<void> _getUserRole() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      final response = await Supabase.instance.client
+          .from('profiles') // Assuming 'users' table holds user data
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+      if (response != null && response['role'] != null) {
+        setState(() {
+          userRole = response['role'];
+        });
+
+        // Debugging: Log the fetched role
+        print('Fetched role: $userRole');
+      } else {
+        print('❌ Role not found or empty');
+      }
+    }
+  }
+
   List<Widget> get _widgetOptions {
-    final basePages = [
+    // Check the role and load the appropriate screen
+    return [
       ChatScreen(sessionId: _sessionId),
       HistoryScreen(),
       BillScreen(),
       const ProfileScreen(),
+      // Show appropriate screen based on the user role
+      userRole == 'manager' // Check for exact match
+          ? ManagerNotificationsScreen()
+          : UserNotificationsScreen(),
     ];
-    if (isManager) {
-      basePages.add(ManagerNotificationsScreen());
-    }
-    return basePages;
   }
 
   List<BottomNavigationBarItem> get _bottomNavItems {
-    final baseItems = const [
+    return const [
       BottomNavigationBarItem(
         icon: Icon(Icons.chat),
         label: 'Chat',
@@ -95,25 +104,11 @@ class _HomePageState extends State<HomePage> {
         icon: Icon(Icons.account_circle),
         label: 'Profile',
       ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.notifications),
+        label: 'Alerts',
+      ),
     ];
-    if (isManager) {
-      return [
-        ...baseItems,
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.notifications),
-          label: 'Alerts',
-        ),
-      ];
-    }
-    return baseItems;
-  }
-
-  List<String> get _appBarTitles {
-    final titles = ['Chat', 'History', 'Bill', 'Profile'];
-    if (isManager) {
-      titles.add('Notifications');
-    }
-    return titles;
   }
 
   @override
@@ -129,9 +124,10 @@ class _HomePageState extends State<HomePage> {
         return true;
       },
       child: Scaffold(
-        // Removed AppBar completely
         body: SafeArea(
-          child: _widgetOptions[_selectedIndex],
+          child: userRole == null
+              ? Center(child: CircularProgressIndicator()) // Show loading until the role is fetched
+              : _widgetOptions[_selectedIndex],
         ),
         bottomNavigationBar: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,

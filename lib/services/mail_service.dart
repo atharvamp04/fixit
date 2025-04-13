@@ -87,7 +87,7 @@ $senderName
       // Step 5: Insert notification
       await supabase.from('notifications').insert({
         'manager_id': managerId,
-        'message': 'Stock low for $productName. Requested 1 unit.',
+        'message': '$productName.',
         'requested_by': userId,
         'is_read': false,
       });
