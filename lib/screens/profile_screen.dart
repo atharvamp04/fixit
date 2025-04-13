@@ -32,6 +32,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Locale _selectedLocale = const Locale('en');
 
+  final List<Map<String, dynamic>> _languageOptions = [
+    {'locale': const Locale('en'), 'label': 'English'},
+    {'locale': const Locale('hi'), 'label': 'हिंदी'},
+    {'locale': const Locale('mr'), 'label': 'मराठी'},
+    {'locale': const Locale('ta'), 'label': 'தமிழ்'},
+    {'locale': const Locale('bn'), 'label': 'বাংলা'},
+    {'locale': const Locale('pa'), 'label': 'ਪੰਜਾਬੀ'},
+    {'locale': const Locale('es'), 'label': 'Español'},
+    {'locale': const Locale('fr'), 'label': 'Français'},
+    {'locale': const Locale('de'), 'label': 'Deutsch'},
+    {'locale': const Locale('it'), 'label': 'Italiano'},
+    {'locale': const Locale('ar'), 'label': 'العربية'},
+    {'locale': const Locale('ja'), 'label': '日本語'},
+    {'locale': const Locale('ru'), 'label': 'Русский'},
+    {'locale': const Locale('zh'), 'label': '中文'},
+  ];
+
+
   @override
   void initState() {
     super.initState();
@@ -41,9 +59,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _selectedLocale = context.locale; // ✅ Safe here
+    _selectedLocale = context.locale;
   }
-
 
   Future<void> _fetchProfile() async {
     final user = supabase.auth.currentUser;
@@ -123,12 +140,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       final imageBytes = await imageFile.readAsBytes();
       final imageName = const Uuid().v4();
-
       final storagePath = 'profile_images/$imageName.jpg';
 
-      await supabase.storage
-          .from('avatars')
-          .uploadBinary(storagePath, imageBytes, fileOptions: const FileOptions(contentType: 'image/jpeg'));
+      await supabase.storage.from('avatars').uploadBinary(
+        storagePath,
+        imageBytes,
+        fileOptions: const FileOptions(contentType: 'image/jpeg'),
+      );
 
       final publicUrl = supabase.storage.from('avatars').getPublicUrl(storagePath);
       setState(() => profilePhotoUrl = publicUrl);
@@ -151,6 +169,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
     context.setLocale(locale);
   }
 
+  void _showLanguageSelectionCard() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(tr("select_language")),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: SizedBox(
+          height: 300,  // Increase height to allow more vertical space
+          width: double.maxFinite,
+          child: ListView.separated(
+            scrollDirection: Axis.vertical,  // Change to vertical scroll
+            separatorBuilder: (_, __) => const SizedBox(height: 10),  // Adjust separator height for vertical scrolling
+            itemCount: _languageOptions.length,
+            itemBuilder: (_, index) {
+              final lang = _languageOptions[index];
+              final isSelected = _selectedLocale == lang['locale'];
+
+              return GestureDetector(
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _changeLanguage(lang['locale']);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isSelected ? const Color(0xFFEFE516) : Colors.grey[300],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      lang['label'],
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? Colors.white : Colors.black,
+                        fontSize: isSelected ? 18 : 16,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -160,29 +227,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12.0),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<Locale>(
-                value: _selectedLocale,
-                dropdownColor: const Color(0xFFEFE516),
-                icon: const Icon(Icons.language, color: Colors.white),
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                items: const [
-                  DropdownMenuItem(value: Locale('en'), child: Text("English")),
-                  DropdownMenuItem(value: Locale('hi'), child: Text("हिंदी")),
-                  DropdownMenuItem(value: Locale('mr'), child: Text("मराठी")),
-                ],
-                onChanged: (locale) => _changeLanguage(locale!),
-              ),
-            ),
+          IconButton(
+            icon: const Icon(Icons.language, color: Colors.white),
+            onPressed: _showLanguageSelectionCard,
           ),
         ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
               child: Stack(
@@ -231,38 +284,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            Center(
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _updateProfile,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFEFE516),
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
-                      ),
-                      child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : Text(tr('update_profile'), style: const TextStyle(color: Colors.white)),
+            Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _updateProfile,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFEFE516),
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
                     ),
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : Text(tr('update_profile'), style: const TextStyle(color: Colors.white)),
                   ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _logout,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
-                      ),
-                      child: Text(tr('logout'), style: const TextStyle(color: Colors.white)),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _logout,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
                     ),
+                    child: Text(tr('logout'), style: const TextStyle(color: Colors.white)),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ],
         ),
