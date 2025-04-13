@@ -4,8 +4,10 @@ import 'package:printing/printing.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pdf_generator.dart';
 import 'package:fixit/services/bill_email_service.dart';
-import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import '../widgets/bill_summary_bottom_sheet.dart';
+import 'package:fixit/widgets/barcode_scanner_screen.dart';
+
 
 
 class BillScreen extends StatefulWidget {
@@ -318,7 +320,7 @@ class _BillScreenState extends State<BillScreen> {
                   _buildBrandDropdown(), // Keep dropdown styling inside this method
                   const SizedBox(height: 16),
 
-                  _buildProductSearchField(),
+                  _buildProductSearchField(context),
                   const SizedBox(height: 16),
 
                   _buildSelectedProductsList(),
@@ -417,7 +419,7 @@ class _BillScreenState extends State<BillScreen> {
     );
   }
 
-  Widget _buildProductSearchField() {
+  Widget _buildProductSearchField(BuildContext context) {
     TextEditingController _searchController = TextEditingController();
 
     return Column(
@@ -432,8 +434,12 @@ class _BillScreenState extends State<BillScreen> {
               return const Iterable<Map<String, dynamic>>.empty();
             }
             return productList.where((product) =>
-            product['product_name'].toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
-                product['product_code'].toLowerCase().contains(textEditingValue.text.toLowerCase()));
+            product['product_name']
+                .toLowerCase()
+                .contains(textEditingValue.text.toLowerCase()) ||
+                product['product_code']
+                    .toLowerCase()
+                    .contains(textEditingValue.text.toLowerCase()));
           },
           onSelected: (Map<String, dynamic> selectedProduct) {
             _searchController.clear(); // clear field after selection
@@ -451,20 +457,26 @@ class _BillScreenState extends State<BillScreen> {
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.qr_code_scanner),
                   onPressed: () async {
-                    String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
-                      "#ff6666", // scanner line color
-                      "Cancel",  // cancel button text
-                      true,      // show flash icon
-                      ScanMode.BARCODE,
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BarcodeScannerScreen(
+                          onScanned: (barcode) {
+                            Navigator.pop(context, barcode);
+                          },
+                        ),
+                      ),
                     );
 
-                    if (barcodeScanRes != '-1') {
-                      controller.text = barcodeScanRes;
+                    if (result != null && result is String) {
+                      controller.text = result;
 
                       final match = productList.firstWhere(
                             (product) =>
-                        product['product_code'].toString().toLowerCase() ==
-                            barcodeScanRes.toLowerCase(),
+                        product['product_code']
+                            .toString()
+                            .toLowerCase() ==
+                            result.toLowerCase(),
                         orElse: () => {},
                       );
 
@@ -482,6 +494,7 @@ class _BillScreenState extends State<BillScreen> {
       ],
     );
   }
+
 
 
 
