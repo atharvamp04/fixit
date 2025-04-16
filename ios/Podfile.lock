@@ -1,5 +1,5 @@
 PODS:
-  - app_links (0.0.1):
+  - app_links (0.0.2):
     - Flutter
   - AppAuth (1.7.6):
     - AppAuth/Core (= 1.7.6)
@@ -7,17 +7,20 @@ PODS:
   - AppAuth/Core (1.7.6)
   - AppAuth/ExternalUserAgent (1.7.6):
     - AppAuth/Core
+  - AppCheckCore (11.2.0):
+    - GoogleUtilities/Environment (~> 8.0)
+    - GoogleUtilities/UserDefaults (~> 8.0)
+    - PromisesObjC (~> 2.4)
   - Flutter (1.0.0)
   - flutter_barcode_scanner (2.0.0):
     - Flutter
   - fluttertoast (0.0.2):
     - Flutter
-    - Toast
   - google_sign_in_ios (0.0.1):
     - AppAuth (>= 1.7.4)
     - Flutter
     - FlutterMacOS
-    - GoogleSignIn (~> 7.1)
+    - GoogleSignIn (~> 8.0)
     - GTMSessionFetcher (>= 3.4.0)
   - GoogleDataTransport (10.1.0):
     - nanopb (~> 3.30910.0)
@@ -27,8 +30,9 @@ PODS:
     - MLKitBarcodeScanning (~> 6.0.0)
   - GoogleMLKit/MLKitCore (7.0.0):
     - MLKitCommon (~> 12.0.0)
-  - GoogleSignIn (7.1.0):
+  - GoogleSignIn (8.0.0):
     - AppAuth (< 2.0, >= 1.7.3)
+    - AppCheckCore (~> 11.0)
     - GTMAppAuth (< 5.0, >= 4.1.1)
     - GTMSessionFetcher/Core (~> 3.3)
   - GoogleToolboxForMac/Defines (4.2.1)
@@ -89,7 +93,6 @@ PODS:
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - Toast (4.1.1)
   - url_launcher_ios (0.0.1):
     - Flutter
 
@@ -109,6 +112,7 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - AppAuth
+    - AppCheckCore
     - GoogleDataTransport
     - GoogleMLKit
     - GoogleSignIn
@@ -122,7 +126,6 @@ SPEC REPOS:
     - MLKitVision
     - nanopb
     - PromisesObjC
-    - Toast
 
 EXTERNAL SOURCES:
   app_links:
@@ -149,15 +152,16 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
 
 SPEC CHECKSUMS:
-  app_links: c5161ac5ab5383ad046884568b4b91cb52df5d91
+  app_links: 76b66b60cc809390ca1ad69bfd66b998d2387ac7
   AppAuth: d4f13a8fe0baf391b2108511793e4b479691fb73
+  AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_barcode_scanner: c5aa9f51c150a6242fa392386bd52b64bb27fcb5
-  fluttertoast: 76fea30fcf04176325f6864c87306927bd7d2038
-  google_sign_in_ios: 0ab078e60da6dfe23cbc55c83502b52bba1aad63
+  fluttertoast: 2c67e14dce98bbdb200df9e1acf610d7a6264ea1
+  google_sign_in_ios: b48bb9af78576358a168361173155596c845f0b9
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleMLKit: eff9e23ec1d90ea4157a1ee2e32a4f610c5b3318
-  GoogleSignIn: d4281ab6cf21542b1cfaff85c191f230b399d2db
+  GoogleSignIn: ce8c89bb9b37fb624b92e7514cc67335d1e277e4
   GoogleToolboxForMac: d1a2cbf009c453f4d6ded37c105e2f67a32206d8
   GoogleUtilities: 26a3abef001b6533cf678d3eb38fd3f614b7872d
   GTMAppAuth: f69bd07d68cd3b766125f7e072c45d7340dea0de
@@ -173,7 +177,6 @@ SPEC CHECKSUMS:
   printing: 54ff03f28fe9ba3aa93358afb80a8595a071dd07
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
-  Toast: 1f5ea13423a1e6674c4abdac5be53587ae481c4e
   url_launcher_ios: 694010445543906933d732453a59da0a173ae33d
 
 PODFILE CHECKSUM: 978dd492a93a8ef4ec2dc2b3631de447af34068a

@@ -9,8 +9,6 @@ import '../widgets/bill_summary_bottom_sheet.dart';
 import 'package:fixit/widgets/barcode_scanner_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
 
-
-
 class BillScreen extends StatefulWidget {
   @override
   _BillScreenState createState() => _BillScreenState();
@@ -70,11 +68,13 @@ class _BillScreenState extends State<BillScreen> {
     if (response != null && response is List) {
       setState(() {
         productList = response.map<Map<String, dynamic>>((product) {
+          // Set a default quantity of 1 if not already specified.
           return {
             'product_name': product['product_name'],
             'product_code': product['product_code'],
             'product_description': product['product_description'] ?? 'No description available',
             'customer_price': product['customer_price'].toString(),
+            'quantity': 1,
           };
         }).toList();
       });
@@ -85,7 +85,16 @@ class _BillScreenState extends State<BillScreen> {
 
   void addProductToList(Map<String, dynamic> product) {
     setState(() {
-      selectedProducts.add(product);
+      // If the product is already added, you might want to increase its quantity.
+      final existing = selectedProducts.firstWhere(
+            (p) => p['product_code'] == product['product_code'],
+        orElse: () => {},
+      );
+      if (existing.isNotEmpty) {
+        existing['quantity'] = (existing['quantity'] ?? 1) + 1;
+      } else {
+        selectedProducts.add(Map<String, dynamic>.from(product));
+      }
     });
   }
 
@@ -163,15 +172,13 @@ class _BillScreenState extends State<BillScreen> {
       return;
     }
 
+    // Calculate subtotal using quantity * price.
     double subTotal = selectedProducts.fold(0.0, (sum, product) {
       final String cleanedPrice = product['customer_price'].toString().replaceAll(RegExp(r'[^0-9.]'), '');
       final double price = double.tryParse(cleanedPrice) ?? 0.0;
       final int quantity = int.tryParse(product['quantity'].toString()) ?? 1;
       return sum + (price * quantity);
     });
-
-
-
     double finalTotal = subTotal + serviceCharge;
 
     final dynamic orderResponse = await supabase.from('orders').insert({
@@ -249,10 +256,6 @@ class _BillScreenState extends State<BillScreen> {
     );
   }
 
-
-
-
-
   Widget _buildStyledField(
       String label,
       IconData icon,
@@ -277,19 +280,18 @@ class _BillScreenState extends State<BillScreen> {
     );
   }
 
-
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFFEFE516),
-        title: Text('bill_form.title'.tr(),
-        style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white),),
+        backgroundColor: const Color(0xFFEFE516),
+        title: Text(
+          'bill_form.title'.tr(),
+          style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white),
+        ),
         actions: [
           IconButton(
-            icon: Icon(Icons.share, color: Colors.white),
+            icon: const Icon(Icons.share, color: Colors.white),
             onPressed: handleSharePdf,
           )
         ],
@@ -306,7 +308,7 @@ class _BillScreenState extends State<BillScreen> {
                   const SizedBox(height: 10),
                   Text(
                     'bill_form.fill_details'.tr(), // Use translation key
-                    style: TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 30),
                   _buildStyledField(
@@ -356,7 +358,9 @@ class _BillScreenState extends State<BillScreen> {
                           ? null
                           : () {
                         double subTotal = selectedProducts.fold(0.0, (sum, product) {
-                          final String cleanedPrice = product['customer_price'].toString().replaceAll(RegExp(r'[^0-9.]'), '');
+                          final String cleanedPrice = product['customer_price']
+                              .toString()
+                              .replaceAll(RegExp(r'[^0-9.]'), '');
                           final double price = double.tryParse(cleanedPrice) ?? 0.0;
                           final int quantity = int.tryParse(product['quantity'].toString()) ?? 1;
                           return sum + (price * quantity);
@@ -390,7 +394,7 @@ class _BillScreenState extends State<BillScreen> {
                       )
                           : Text(
                         'bill_form.view_summary'.tr(), // Use translation key
-                        style: TextStyle(color: Colors.white, fontSize: 16),
+                        style: const TextStyle(color: Colors.white, fontSize: 16),
                       ),
                     ),
                   ),
@@ -490,7 +494,8 @@ class _BillScreenState extends State<BillScreen> {
                             (product) =>
                         product['product_code']
                             .toString()
-                            .toLowerCase() == result.toLowerCase(),
+                            .toLowerCase() ==
+                            result.toLowerCase(),
                         orElse: () => {},
                       );
 
@@ -513,7 +518,10 @@ class _BillScreenState extends State<BillScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("bill_form.selected_products".tr(), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(
+          "bill_form.selected_products".tr(),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -530,7 +538,7 @@ class _BillScreenState extends State<BillScreen> {
                     Text("₹${product['customer_price']}"),
                     Row(
                       children: [
-                        Text("Qty: "),
+                        const Text("Qty: "),
                         IconButton(
                           icon: const Icon(Icons.remove),
                           onPressed: () {
@@ -569,27 +577,4 @@ class _BillScreenState extends State<BillScreen> {
       ],
     );
   }
-
-
-
-  Widget _buildTextField(String label, IconData icon, TextEditingController controller,
-      {TextInputType keyboardType = TextInputType.text, bool readOnly = false, bool enabled = true}) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      readOnly: readOnly,
-      enabled: enabled,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        border: const OutlineInputBorder(),
-      ),
-      validator: (value) => value == null || value.isEmpty ? "Enter $label" : null,
-    );
-  }
-
-
 }
-
-
-

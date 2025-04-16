@@ -3,10 +3,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:easy_localization/easy_localization.dart'; // Import easy_localization
+import 'package:easy_localization/easy_localization.dart';
 import '../services/wit_ai_service.dart';
 import '../widgets/product_grid.dart';
-import '../widgets/animated_chat_bubble.dart'; // Animated chat bubbles
+import '../widgets/animated_chat_bubble.dart';
 
 class ChatScreen extends StatefulWidget {
   final String sessionId;
@@ -19,49 +19,53 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
   final WitAIService _witAIService = WitAIService();
-  List<Map<String, dynamic>> messages = [];
-  bool isLoading = false;
   final ScrollController _scrollController = ScrollController();
 
-  final List<String> hintMessages = [
-    "ask_about_products".tr(),
-    "check_stock".tr(),
-    "get_product_details".tr(),
-    "find_best_options".tr(),
-    "type_message".tr()
-  ];
+  List<Map<String, dynamic>> messages = [];
+  bool isLoading = false;
   int hintIndex = 0;
   Timer? _hintTimer;
-  bool _isTextFieldActive = false;
 
   @override
   void initState() {
     super.initState();
     _loadChatHistory();
     _startHintAnimation();
+    _focusNode.addListener(() {
+      setState(() {}); // triggers rebuild when focus changes
+    });
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _focusNode.dispose();
     _scrollController.dispose();
     _hintTimer?.cancel();
     super.dispose();
   }
 
+  /// Generates localized hint messages.
+  List<String> _getHintMessages() {
+    return [
+      "ask_about_products".tr(),
+      "check_stock".tr(),
+      "get_product_details".tr(),
+      "find_best_options".tr(),
+      "type_message".tr(),
+    ];
+  }
+
   void _startHintAnimation() {
     _hintTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (!_isTextFieldActive && mounted) {
+      if (!_focusNode.hasFocus && mounted) {
         setState(() {
-          hintIndex = (hintIndex + 1) % hintMessages.length;
+          hintIndex = (hintIndex + 1) % _getHintMessages().length;
         });
       }
     });
-  }
-
-  void _stopHintAnimation() {
-    _hintTimer?.cancel();
   }
 
   void _scrollToBottom() {
@@ -83,13 +87,7 @@ class _ChatScreenState extends State<ChatScreen> {
       try {
         List<dynamic> jsonData = jsonDecode(chatHistory);
         setState(() {
-          messages = jsonData.map<Map<String, dynamic>>((msg) {
-            return {
-              "sender": msg["sender"],
-              "type": msg["type"],
-              "data": msg["data"],
-            };
-          }).toList();
+          messages = List<Map<String, dynamic>>.from(jsonData);
         });
         _scrollToBottom();
       } catch (e) {
@@ -100,8 +98,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _saveChatHistory() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String chatHistory = jsonEncode(messages);
-    await prefs.setString(widget.sessionId, chatHistory);
+    await prefs.setString(widget.sessionId, jsonEncode(messages));
   }
 
   void _sendMessage() async {
@@ -123,41 +120,60 @@ class _ChatScreenState extends State<ChatScreen> {
         messages.add({
           "sender": "bot",
           "type": response["type"],
-          "data": response["type"] == "text" ? response["message"] : response["products"]
+          "data": response["type"] == "text"
+              ? response["message"]
+              : response["products"]
         });
       });
-      _scrollToBottom();
     } catch (error) {
       setState(() {
-        messages.add({"sender": "bot", "type": "text", "data": "Sorry, I couldn't process that."});
+        messages.add({
+          "sender": "bot",
+          "type": "text",
+          "data": "Sorry, I couldn't process that."
+        });
       });
-      _scrollToBottom();
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
+      _scrollToBottom();
       _saveChatHistory();
     }
   }
 
+  /// Updated new chat session method.
+  /// If the current route can be popped, use pushReplacement; otherwise, simply push a new ChatScreen.
   void _startNewChat() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String newSessionId = DateTime.now().millisecondsSinceEpoch.toString();
     await prefs.setString(widget.sessionId, jsonEncode(messages));
+    final newSessionId = DateTime.now().millisecondsSinceEpoch.toString();
 
-    if (context.mounted) {
-      Navigator.pop(context, newSessionId);
+    if (Navigator.of(context).canPop()) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChatScreen(sessionId: newSessionId),
+        ),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChatScreen(sessionId: newSessionId),
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final hintMessages = _getHintMessages();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFFF8F13F),
         title: Text(
-          "chat".tr(), // Localization for "Chats"
-          style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white),
+          "chat".tr(),
+          style: const TextStyle(
+              fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white),
         ),
         actions: [
           IconButton(
@@ -171,16 +187,17 @@ class _ChatScreenState extends State<ChatScreen> {
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               itemCount: messages.length,
               itemBuilder: (context, index) {
-                var msg = messages[index];
+                final msg = messages[index];
                 if (msg["type"] == "text") {
                   return AnimatedChatBubble(
                     text: msg["data"] ?? "No content",
                     isUser: msg["sender"] == "user",
                   );
-                } else if (msg["type"] == "product") {
+                } else if (msg["type"] == "product" && msg["data"] != null) {
                   return ProductGrid(products: msg["data"]);
                 } else {
                   return const SizedBox();
@@ -191,7 +208,8 @@ class _ChatScreenState extends State<ChatScreen> {
           if (isLoading)
             const Padding(
               padding: EdgeInsets.all(8.0),
-              child: CircularProgressIndicator(color: Color(0xFFEFE516)),
+              child: CircularProgressIndicator(
+                  color: Color(0xFFEFE516)),
             ),
           Padding(
             padding: const EdgeInsets.all(12.0),
@@ -200,19 +218,25 @@ class _ChatScreenState extends State<ChatScreen> {
                 Expanded(
                   child: TextField(
                     controller: _controller,
+                    focusNode: _focusNode,
                     style: const TextStyle(fontSize: 16),
                     decoration: InputDecoration(
-                      hintText: hintMessages[hintIndex],
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      hintText:
+                      _focusNode.hasFocus ? "" : hintMessages[hintIndex],
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30), // Original rounded border
-                        borderSide: const BorderSide(color: Colors.grey, width: 1),
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: const BorderSide(
+                            color: Colors.grey, width: 1),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30), // Same border radius
-                        borderSide: const BorderSide(color: Color(0xFFEFE516), width: 2),
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: const BorderSide(
+                            color: Color(0xFFEFE516), width: 2),
                       ),
                     ),
+                    onSubmitted: (_) => _sendMessage(),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -222,9 +246,10 @@ class _ChatScreenState extends State<ChatScreen> {
                     padding: const EdgeInsets.all(12),
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Color(0xFFF8F13F), // Yellow background
+                      color: Color(0xFFF8F13F),
                     ),
-                    child: const Icon(Icons.send, color: Colors.white), // White icon
+                    child:
+                    const Icon(Icons.send, color: Colors.white),
                   ),
                 ),
               ],

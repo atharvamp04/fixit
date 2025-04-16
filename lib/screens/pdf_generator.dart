@@ -40,11 +40,14 @@ Future<Uint8List> generatePdf({
     final Uint8List qrCodeData = qrCode.buffer.asUint8List();
     final Uint8List stampImageData = stampImage.buffer.asUint8List();
 
-    // Calculate totals.
+    // Calculate totals taking quantities into account.
     double subTotal = selectedProducts.fold(0.0, (sum, product) {
-      String cleanedPrice = product['customer_price'].replaceAll(RegExp(r'[^0-9.]'), '');
+      String cleanedPrice = product['customer_price']
+          .toString()
+          .replaceAll(RegExp(r'[^0-9.]'), '');
       double price = double.tryParse(cleanedPrice) ?? 0.0;
-      return sum + price;
+      int quantity = product['quantity'] ?? 1;
+      return sum + (price * quantity);
     });
     double finalTotal = subTotal + serviceCharge;
 
@@ -122,11 +125,12 @@ Future<Uint8List> generatePdf({
                     pw.Table.fromTextArray(
                       headers: ["DESCRIPTION", "QUANTITY", "RATE (incl. tax)", "AMOUNT"],
                       data: selectedProducts.map((product) {
-                        final String cleanedPrice = product['customer_price'].replaceAll(RegExp(r'[^0-9.]'), '');
+                        final String cleanedPrice = product['customer_price']
+                            .toString()
+                            .replaceAll(RegExp(r'[^0-9.]'), '');
                         final double price = double.tryParse(cleanedPrice) ?? 0.0;
                         final int quantity = product['quantity'] ?? 1;
                         final double total = price * quantity;
-
                         return [
                           product['product_description'],
                           "$quantity",
@@ -145,7 +149,6 @@ Future<Uint8List> generatePdf({
                         3: pw.FlexColumnWidth(),
                       },
                     ),
-
                     pw.SizedBox(height: 20),
                     pw.Divider(),
                     // Totals.
@@ -158,7 +161,6 @@ Future<Uint8List> generatePdf({
                           pw.Text("SERVICE CHARGE: Rs.${serviceCharge.toStringAsFixed(2)}", style: pw.TextStyle(fontSize: 12)),
                           pw.Text("GRAND TOTAL: Rs.${finalTotal.toStringAsFixed(2)}",
                               style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
-
                         ],
                       ),
                     ),
@@ -221,17 +223,25 @@ Future<Uint8List> generatePdf({
                     ),
                     pw.SizedBox(height: 10),
                     // Additional Notes.
-                    pw.Text("Make all cheque or bank transfers payable to: M/s Electrolyte Solutions.",
-                        style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+                    pw.Text(
+                      "Make all cheque or bank transfers payable to: M/s Electrolyte Solutions.",
+                      style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                    ),
                     pw.SizedBox(height: 5),
-                    pw.Text("Note: Spare/Products are warranted for a period of 1 year from the date of handing over to the customer.",
-                        style: pw.TextStyle(fontSize: 9)),
+                    pw.Text(
+                      "Note: Spare/Products are warranted for a period of 1 year from the date of handing over to the customer.",
+                      style: pw.TextStyle(fontSize: 9),
+                    ),
                     pw.SizedBox(height: 5),
-                    pw.Text("This is a computer-generated invoice. No signature required.",
-                        style: pw.TextStyle(fontSize: 9)),
+                    pw.Text(
+                      "This is a computer-generated invoice. No signature required.",
+                      style: pw.TextStyle(fontSize: 9),
+                    ),
                     pw.SizedBox(height: 5),
-                    pw.Text("Subjected to Navi Mumbai Jurisdiction.",
-                        style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold)),
+                    pw.Text(
+                      "Subjected to Navi Mumbai Jurisdiction.",
+                      style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+                    ),
                   ],
                 ),
               ],
