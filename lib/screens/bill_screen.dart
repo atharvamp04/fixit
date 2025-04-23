@@ -107,7 +107,7 @@ class _BillScreenState extends State<BillScreen> {
       return result['data'] as String;
     } else {
       print("RPC returned unexpected data: $result");
-      return "INV-0001";
+      return "ES/25-26/00";
     }
   }
 

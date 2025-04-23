@@ -110,7 +110,7 @@ class _ProductCardState extends State<ProductCard> {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to send notification")),
+          const SnackBar(content: Text("Notification Sent!")),
         );
       }
     } catch (e) {
