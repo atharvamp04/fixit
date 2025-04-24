@@ -7,7 +7,7 @@ class MailService {
 
   // ⚠️ Do not hardcode credentials in production
   final String username = 'atharvamp04@gmail.com';
-  final String password = 'qyim tslj tqjy clyr'; // App password
+  final String password = 'xlhu dydw iofd tpkc'; // App password
 
   Future<void> sendStockRequestEmail({
     required String managerEmail,
