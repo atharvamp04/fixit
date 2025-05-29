@@ -57,6 +57,7 @@
     "user_name": "Имя техника",
     "customer_email": "Электронная почта клиента",
     "select_brand": "Выберите марку",
+    "warranty_type": "Тип гарантии",
     "search_product": "Поиск товара",
     "selected_products": "Выбранные товары",
     "serial_number": "Серийный номер",

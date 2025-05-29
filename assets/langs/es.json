@@ -52,6 +52,7 @@
   "bill_form": {
     "title": "Crear factura",
     "create_invoice": "Crear factura",
+    "warranty_type": "Tipo de garantía",
     "fill_details": "Por favor, llena los detalles",
     "invoice_number": "Número de factura",
     "user_name": "Nombre del técnico",

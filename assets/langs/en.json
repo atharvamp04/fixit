@@ -52,6 +52,7 @@
   "bill_form": {
     "title": "Create Invoice",
     "create_invoice": "Create Invoice",
+    "warranty_type": "Warranty Type",
     "fill_details": "Please fill in the details",
     "invoice_number": "Invoice Number",
     "user_name": "Customer Name",

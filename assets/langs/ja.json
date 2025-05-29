@@ -55,6 +55,7 @@
     "fill_details": "詳細情報を入力してください",
     "invoice_number": "請求書番号",
     "user_name": "技術者名",
+    "warranty_type": "保証の種類",
     "customer_email": "顧客のメールアドレス",
     "select_brand": "ブランド選択",
     "search_product": "製品を検索",

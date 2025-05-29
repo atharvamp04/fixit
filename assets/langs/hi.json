@@ -52,6 +52,7 @@
   "bill_form": {
     "title": "चालान बनाएं",
     "create_invoice": "चालान बनाएं",
+    "warranty_type": "वारंटी प्रकार",
     "fill_details": "कृपया विवरण भरें",
     "invoice_number": "चालान संख्या",
     "user_name": "तकनीशियन का नाम",

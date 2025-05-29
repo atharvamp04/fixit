@@ -52,6 +52,7 @@
   "bill_form": {
     "title": "إنشاء فاتورة",
     "create_invoice": "إنشاء فاتورة",
+    "warranty_type": "نوع الضمان",
     "fill_details": "يرجى ملء التفاصيل",
     "invoice_number": "رقم الفاتورة",
     "user_name": "اسم الفني",

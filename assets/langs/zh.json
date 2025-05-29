@@ -3,6 +3,7 @@
   "login": "登录",
   "signup": "注册",
   "welcome": "欢迎来到 fixit",
+  "warranty_type": "保修类型",
   "error": "错误",
   "welcome_back": "欢迎回来 👋!",
   "enter_email_password": "请输入您的电子邮件和密码以登录。",
