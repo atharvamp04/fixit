@@ -46,6 +46,12 @@ class _BillScreenState extends State<BillScreen> {
   // Instance of our email service.
   final BillEmailService emailService = BillEmailService();
 
+  /// Holds the raw sequence from RPC, e.g. "ES/25-26/001"
+  String _baseInvoice = "";
+
+  /// Warranty type prefix: “OW” or “IN”
+  String _warrantyType = "OW";
+
   @override
   void initState() {
     super.initState();
@@ -54,11 +60,31 @@ class _BillScreenState extends State<BillScreen> {
   }
 
   Future<void> _populateInvoiceNumber() async {
-    String invoice = await getNextInvoiceNumber();
+    final dynamic result = await supabase.rpc('generate_invoice_number');
+    String base;
+    if (result is String) {
+      base = result;
+    } else if (result is Map<String, dynamic> && result.containsKey('data')) {
+      base = result['data'] as String;
+    } else {
+      base = "ES/25-26/001";
+    }
     setState(() {
-      invoiceNumberController.text = invoice;
+      _baseInvoice = base;
+      _rebuildInvoice();
     });
   }
+
+  /// Combine base + prefix → full invoice
+  void _rebuildInvoice() {
+    final parts = _baseInvoice.split('/');
+    if (parts.length == 3) {
+      invoiceNumberController.text = "${parts[0]}/${parts[1]}/$_warrantyType${parts[2]}";
+    } else {
+      invoiceNumberController.text = _baseInvoice;
+    }
+  }
+
 
   Future<void> fetchProducts() async {
     final response = await supabase
@@ -318,6 +344,27 @@ class _BillScreenState extends State<BillScreen> {
                     readOnly: true,
                     enabled: false,
                   ),
+
+                  // — Warranty Type —
+                  Text("bill_form.warranty_type".tr()),
+                  DropdownButtonFormField<String>(
+                    value: _warrantyType,
+                    items: const [
+                      DropdownMenuItem(value: 'OW', child: Text('Out of Warranty (OW)')),
+                      DropdownMenuItem(value: 'IN', child: Text('In Warranty (IN)')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _warrantyType = val;
+                          _rebuildInvoice();
+                        });
+                      }
+                    },
+                  ),
+
+                  SizedBox(height: 16),
+
                   const SizedBox(height: 16),
                   _buildStyledField(
                     'bill_form.user_name'.tr(), // Use translation key
