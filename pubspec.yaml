@@ -36,7 +36,7 @@ dev_dependencies:
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/fixit.png"
+  image_path: "assets/electrolyte_logo.jpeg"
   min_sdk_android: 21 # Android min SDK version
   web:
     generate: true
