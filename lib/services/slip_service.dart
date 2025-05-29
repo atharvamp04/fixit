@@ -12,7 +12,7 @@ class MailService {
   }) async {
     final smtpServer = gmail(
       'atharvamp04@gmail.com',
-      'qyim tslj tqjy clyr', // Use Gmail App Password
+      'xlhu dydw iofd tpkc', // Use Gmail App Password
     );
 
     final message = Message()

@@ -51,7 +51,8 @@ Future<Uint8List> generatePdf({
       int quantity = product['quantity'] ?? 1;
       return sum + (price * quantity);
     });
-    double finalTotal = subTotal + serviceCharge;
+    double finalTotal = (subTotal + serviceCharge).roundToDouble();
+
 
     String grandTotalInWords = NumberToWord().convert('en-in', finalTotal.toInt()).toUpperCase() + " RUPEES ONLY";
 
