@@ -351,7 +351,7 @@ class _BillScreenState extends State<BillScreen> {
                     value: _warrantyType,
                     items: const [
                       DropdownMenuItem(value: 'OW', child: Text('Out of Warranty (OW)')),
-                      DropdownMenuItem(value: 'IN', child: Text('In Warranty (IN)')),
+                      DropdownMenuItem(value: 'IW', child: Text('In Warranty (IW)')),
                     ],
                     onChanged: (val) {
                       if (val != null) {
