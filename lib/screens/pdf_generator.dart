@@ -2,6 +2,8 @@ import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:number_to_words/number_to_words.dart';
+
 
 /// Generates the invoice PDF and returns the PDF bytes.
 /// The PDF includes fields such as invoice number, brand, and customer email.
@@ -50,6 +52,9 @@ Future<Uint8List> generatePdf({
       return sum + (price * quantity);
     });
     double finalTotal = subTotal + serviceCharge;
+
+    String grandTotalInWords = NumberToWord().convert('en-in', finalTotal.toInt()).toUpperCase() + " RUPEES ONLY";
+
 
     pdf.addPage(
       pw.Page(
@@ -157,13 +162,16 @@ Future<Uint8List> generatePdf({
                       child: pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.end,
                         children: [
-                          pw.Text("SUBTOTAL: Rs.${subTotal.toStringAsFixed(2)}", style: pw.TextStyle(fontSize: 12)),
-                          pw.Text("SERVICE CHARGE: Rs.${serviceCharge.toStringAsFixed(2)}", style: pw.TextStyle(fontSize: 12)),
+                          pw.Text("SUBTOTAL: Rs.${subTotal.toStringAsFixed(2)}", style: pw.TextStyle(fontSize: 10)),
+                          pw.Text("SERVICE CHARGE: Rs.${serviceCharge.toStringAsFixed(2)}", style: pw.TextStyle(fontSize: 10)),
                           pw.Text("GRAND TOTAL: Rs.${finalTotal.toStringAsFixed(2)}",
-                              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                              style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                          pw.SizedBox(height: 5),
+                          pw.Text("IN WORDS: ${grandTotalInWords}", style: pw.TextStyle(fontSize: 10, fontStyle: pw.FontStyle.italic)),
                         ],
                       ),
                     ),
+
                     pw.SizedBox(height: 20),
                     pw.Divider(),
                     // Bank Details, QR Code, and Stamp.
