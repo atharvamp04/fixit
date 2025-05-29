@@ -1,0 +1,71 @@
+name: fixit
+description: "A new Flutter project."
+publish_to: "none" # Prevent accidental publishing to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  supabase_flutter: ^2.5.6
+  image_picker: ^0.8.4+4
+  provider: ^6.0.2
+  fluttertoast: ^8.2.1
+  google_sign_in: ^5.2.0
+  uuid: ^3.0.7
+  cupertino_icons: ^1.0.8
+#  dialogflow_flutter: ^1.0.0
+  http: ^1.0.0
+  bubble: ^1.2.1
+  flutter_animate: ^4.5.2
+  mailer: ^6.2.0
+  flutter_launcher_icons: ^0.14.3
+  pdf: ^3.10.4
+  printing: ^5.11.0
+  mobile_scanner: ^6.0.7
+  easy_localization: ^3.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/fixit.png"
+  min_sdk_android: 21 # Android min SDK version
+  web:
+    generate: true
+    image_path: "assets/fixit.png"
+    background_color: "#hexcode"
+    theme_color: "#hexcode"
+  windows:
+    generate: true
+    image_path: "assets/fixit.png"
+    icon_size: 48 # Min:48, Max:256, Default:48
+  macos:
+    generate: true
+    image_path: "assets/fixit.png"
+  remove_alpha_ios: true
+
+flutter:
+  assets:
+    - assets/langs/
+    - assets/default_profile.png
+    - assets/Google.png
+    - assets/invoice_template.jpg
+    - assets/atomberg_logo.png
+    - assets/electrolyte_logo.jpeg
+    - assets/qr_code.png
+    - assets/stamp.png
+    - assets/fonts/Roboto-Regular.ttf
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf
+  uses-material-design: true
+
