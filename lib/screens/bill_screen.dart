@@ -336,7 +336,7 @@ class _BillScreenState extends State<BillScreen> {
                     'bill_form.fill_details'.tr(), // Use translation key
                     style: const TextStyle(fontSize: 16),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 10),
                   _buildStyledField(
                     'bill_form.invoice_number'.tr(), // Use translation key
                     Icons.confirmation_number,
@@ -344,7 +344,7 @@ class _BillScreenState extends State<BillScreen> {
                     readOnly: true,
                     enabled: false,
                   ),
-
+                  SizedBox(height: 16),
                   // — Warranty Type —
                   Text("bill_form.warranty_type".tr()),
                   DropdownButtonFormField<String>(
@@ -362,8 +362,6 @@ class _BillScreenState extends State<BillScreen> {
                       }
                     },
                   ),
-
-                  SizedBox(height: 16),
 
                   const SizedBox(height: 16),
                   _buildStyledField(
