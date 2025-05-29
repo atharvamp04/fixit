@@ -152,8 +152,17 @@ class _ManagerNotificationsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('My Notifications',style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800),),
-        backgroundColor: const Color(0xFFF8F13F),),
+      appBar: AppBar(
+        title: Text(
+          'My Notifications',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 30,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        backgroundColor: const Color(0xFFF8F13F),
+      ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
           : _notifications.isEmpty
@@ -176,9 +185,9 @@ class _ManagerNotificationsScreenState
 
           final createdAtRaw = notification['created_at'];
           final formattedDate = createdAtRaw != null
-              ? DateFormat('MMM d, yyyy • hh:mm a')
-              .format(DateTime.tryParse(createdAtRaw.toString()) ??
-              DateTime.now())
+              ? DateFormat('MMM d, yyyy • hh:mm a').format(
+              DateTime.tryParse(createdAtRaw.toString()) ??
+                  DateTime.now())
               : 'Unknown Date';
 
           final productName =
@@ -193,6 +202,11 @@ class _ManagerNotificationsScreenState
               profiles['email'] != null
               ? profiles['email']
               : 'Unknown Email';
+
+          // Skip card if requestedBy is Unknown
+          if (requestedBy == 'Unknown') {
+            return SizedBox.shrink();
+          }
 
           return Dismissible(
             key: Key(notification['id']),
@@ -224,64 +238,55 @@ class _ManagerNotificationsScreenState
                             fontSize: 16,
                             fontWeight: FontWeight.bold)),
                     SizedBox(height: 5),
-                    if (requestedBy.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4.0),
-                        child: Text(
-                          'Requested by: $requestedBy',
-                          style: TextStyle(
-                              color: Colors.grey[700],
-                              fontStyle: FontStyle.italic),
-                        ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Text(
+                        'Requested by: $requestedBy',
+                        style: TextStyle(
+                            color: Colors.grey[700],
+                            fontStyle: FontStyle.italic),
                       ),
+                    ),
                     SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         ElevatedButton(
                           onPressed: () async {
-                            final notification = _notifications[index];
-                            final requesterEmail = notification['profiles']?['email'] ?? 'Unknown Email';
-                            final requestedBy = (notification['profiles']?['full_name'] ?? 'Unknown').trim();
-                            final productName = notification['message'] ?? 'No product name';
-                            final requesterId = notification['requested_by'];
+                            final requesterId =
+                            notification['requested_by'];
 
-                            // Send email
                             final mailService = MailService();
-                            final pdf = await _generatePdf(productName, requestedBy);
+                            final pdf = await _generatePdf(
+                                productName, requestedBy);
                             final pdfBytes = await pdf.save();
 
-                            await mailService.sendCourierConfirmationSlip(
+                            await mailService
+                                .sendCourierConfirmationSlip(
                               recipientEmail: requesterEmail,
                               recipientName: requestedBy,
                               productName: productName,
                               pdfBytes: pdfBytes,
                             );
 
-                            // Send in-app notification to requester
                             await sendNotificationToRequester(
                               recipientId: requesterId,
-                              message: '✅ Your request for "$productName" has been accepted and couriered.',
+                              message:
+                              '✅ Your request for "$productName" has been accepted and couriered.',
                             );
 
-                            // Mark as read for manager
                             _markAsRead(notification['id']);
                           },
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green),
                           child: Text('Accept'),
                         ),
-
                         SizedBox(width: 10),
-
                         ElevatedButton(
                           onPressed: () async {
-                            final notification = _notifications[index];
-                            final requesterEmail = notification['profiles']?['email'] ?? 'Unknown Email';
-                            final requestedBy = (notification['profiles']?['full_name'] ?? 'Unknown').trim();
-                            final productName = notification['message'] ?? 'No product name';
-                            final requesterId = notification['requested_by'];
+                            final requesterId =
+                            notification['requested_by'];
 
-                            // Send rejection email
                             final mailService = MailService();
                             await mailService.sendRejectionMail(
                               recipientEmail: requesterEmail,
@@ -289,16 +294,16 @@ class _ManagerNotificationsScreenState
                               productName: productName,
                             );
 
-                            // Send in-app rejection notification
                             await sendNotificationToRequester(
                               recipientId: requesterId,
-                              message: '❌ Your request for "$productName" has been rejected by the manager.',
+                              message:
+                              '❌ Your request for "$productName" has been rejected by the manager.',
                             );
 
-                            // Mark as read
                             _markAsRead(notification['id']);
                           },
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red),
                           child: Text('Reject'),
                         ),
                       ],
