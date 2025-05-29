@@ -447,13 +447,13 @@ class _BillScreenState extends State<BillScreen> {
         Text("bill_form.search_product".tr()), // Use translation key
         Autocomplete<Map<String, dynamic>>(
           displayStringForOption: (product) =>
-          "${product['product_name']} (${product['product_code']})",
+          "${product['product_description']} (${product['product_code']})",
           optionsBuilder: (TextEditingValue textEditingValue) {
             if (textEditingValue.text.isEmpty) {
               return const Iterable<Map<String, dynamic>>.empty();
             }
             return productList.where((product) =>
-            product['product_name']
+            product['product_description']
                 .toLowerCase()
                 .contains(textEditingValue.text.toLowerCase()) ||
                 product['product_code']
