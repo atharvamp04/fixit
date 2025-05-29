@@ -27,6 +27,8 @@ dependencies:
   printing: ^5.11.0
   mobile_scanner: ^6.0.7
   easy_localization: ^3.0.3
+  number_to_words: ^1.0.0
+
 
 dev_dependencies:
   flutter_test:

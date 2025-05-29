@@ -19,7 +19,8 @@ class BillSummaryBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool isChecked = false;
-    double grandTotal = subtotal + serviceCharge;
+    double grandTotal = (subtotal + serviceCharge).roundToDouble();
+
 
     return StatefulBuilder(
       builder: (context, setState) => Padding(

@@ -543,7 +543,7 @@ class _BillScreenState extends State<BillScreen> {
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 6),
               child: ListTile(
-                title: Text("${product['product_name']} (${product['product_code']})"),
+                title: Text("${product['product_description']} (${product['product_code']})"),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
