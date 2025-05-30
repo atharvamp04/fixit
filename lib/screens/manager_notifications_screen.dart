@@ -221,48 +221,39 @@ class _ManagerNotificationsScreenState
               _markAsRead(notification['id']);
             },
             child: Card(
-              margin:
-              EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              elevation: 3,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(productName,
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold)),
-                    SizedBox(height: 5),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: Text(
-                        'Requested by: $requestedBy',
-                        style: TextStyle(
-                            color: Colors.grey[700],
-                            fontStyle: FontStyle.italic),
-                      ),
+                    // You can put title/subtitle of notification here
+                    Text(
+                      productName,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Requested by: $requestedBy",
+                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    ),
+                    const SizedBox(height: 16),
+
+                    /// Buttons row here
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        ElevatedButton(
+                        ElevatedButton.icon(
                           onPressed: () async {
-                            final requesterId =
-                            notification['requested_by'];
+                            final requesterId = notification['requested_by'];
 
                             final mailService = MailService();
-                            final pdf = await _generatePdf(
-                                productName, requestedBy);
+                            final pdf = await _generatePdf(productName, requestedBy);
                             final pdfBytes = await pdf.save();
 
-                            await mailService
-                                .sendCourierConfirmationSlip(
+                            await mailService.sendCourierConfirmationSlip(
                               recipientEmail: requesterEmail,
                               recipientName: requestedBy,
                               productName: productName,
@@ -271,21 +262,24 @@ class _ManagerNotificationsScreenState
 
                             await sendNotificationToRequester(
                               recipientId: requesterId,
-                              message:
-                              '✅ Your request for "$productName" has been accepted and couriered.',
+                              message: '✅ Your request for "$productName" has been accepted and couriered.',
                             );
 
                             _markAsRead(notification['id']);
                           },
+                          icon: const Icon(Icons.check_circle, color: Colors.white),
                           style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green),
-                          child: Text('Accept'),
+                            backgroundColor: Colors.yellow,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          label: const Text("Accept",
+                            style: TextStyle(color: Colors.black),),
                         ),
-                        SizedBox(width: 10),
-                        ElevatedButton(
+                        const SizedBox(width: 12),
+                        ElevatedButton.icon(
                           onPressed: () async {
-                            final requesterId =
-                            notification['requested_by'];
+                            final requesterId = notification['requested_by'];
 
                             final mailService = MailService();
                             await mailService.sendRejectionMail(
@@ -296,15 +290,20 @@ class _ManagerNotificationsScreenState
 
                             await sendNotificationToRequester(
                               recipientId: requesterId,
-                              message:
-                              '❌ Your request for "$productName" has been rejected by the manager.',
+                              message: '❌ Your request for "$productName" has been rejected by the manager.',
                             );
 
                             _markAsRead(notification['id']);
                           },
+                          icon: const Icon(Icons.cancel, color: Colors.white),
                           style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red),
-                          child: Text('Reject'),
+                            backgroundColor: Colors.red,
+
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          label: const Text("Reject",
+                            style: TextStyle(color: Colors.white),),
                         ),
                       ],
                     ),
@@ -312,6 +311,7 @@ class _ManagerNotificationsScreenState
                 ),
               ),
             ),
+
           );
         },
       ),
