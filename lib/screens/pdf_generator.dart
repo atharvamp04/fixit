@@ -54,7 +54,7 @@ Future<Uint8List> generatePdf({
     double finalTotal = (subTotal + serviceCharge).roundToDouble();
 
 
-    String grandTotalInWords = NumberToWord().convert('en-in', finalTotal.toInt()).toUpperCase() + " RUPEES ONLY";
+    String grandTotalInWords = NumberToWord().convert('en-in', finalTotal.toInt()).toUpperCase() + "RUPEES ONLY";
 
 
     pdf.addPage(
@@ -155,7 +155,7 @@ Future<Uint8List> generatePdf({
                         3: pw.FlexColumnWidth(),
                       },
                     ),
-                    pw.SizedBox(height: 20),
+                    pw.SizedBox(height: 10),
                     pw.Divider(),
                     // Totals.
                     pw.Align(
@@ -167,13 +167,22 @@ Future<Uint8List> generatePdf({
                           pw.Text("SERVICE CHARGE: Rs.${serviceCharge.toStringAsFixed(2)}", style: pw.TextStyle(fontSize: 10)),
                           pw.Text("GRAND TOTAL: Rs.${finalTotal.toStringAsFixed(2)}",
                               style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
-                          pw.SizedBox(height: 5),
-                          pw.Text("IN WORDS: ${grandTotalInWords}", style: pw.TextStyle(fontSize: 10, fontStyle: pw.FontStyle.italic)),
                         ],
                       ),
                     ),
 
-                    pw.SizedBox(height: 20),
+                    pw.SizedBox(height: 5),
+                    pw.Align(
+                      alignment: pw.Alignment.centerLeft,
+                      child: pw.Text(
+                        "IN WORDS: ${grandTotalInWords}",
+                        style: pw.TextStyle(
+                          fontSize: 10,
+                          fontStyle: pw.FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                    pw.SizedBox(height: 5),
                     pw.Divider(),
                     // Bank Details, QR Code, and Stamp.
                     pw.Row(
