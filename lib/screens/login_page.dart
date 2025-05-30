@@ -127,18 +127,21 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 120),
-              Text('welcome_back'.tr(), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
+              const SizedBox(height: 80),
 
                        // — Your logo —
-                       Center(
-                           child: Image.asset('assets/applogo_removebg.jpeg',
-                               height: 80,              // adjust as needed
-                               fit: BoxFit.contain,
-                           ),
-                       ),
+              Align(
+                alignment: Alignment.center,
+                child: Image.asset(
+                  'assets/applogo_removebg.jpeg',
+                  height: 55,        // a bit smaller
+                  fit: BoxFit.contain,
+                ),
+              ),
                   const SizedBox(height: 20),
+                  const SizedBox(height: 20),
+
+              Text('welcome_back'.tr(), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
               Text('enter_email_password'.tr(), style: const TextStyle(fontSize: 16)),
               const SizedBox(height: 20),
               TextField(
