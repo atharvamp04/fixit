@@ -64,6 +64,7 @@ flutter:
     - assets/electrolyte_logo.jpeg
     - assets/qr_code.png
     - assets/stamp.png
+    - assets/applogo_removebg.jpeg
     - assets/fonts/Roboto-Regular.ttf
   fonts:
     - family: Roboto

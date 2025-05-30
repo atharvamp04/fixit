@@ -130,6 +130,15 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 120),
               Text('welcome_back'.tr(), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
               const SizedBox(height: 20),
+
+                       // — Your logo —
+                       Center(
+                           child: Image.asset('assets/applogo_removebg.jpeg',
+                               height: 80,              // adjust as needed
+                               fit: BoxFit.contain,
+                           ),
+                       ),
+                  const SizedBox(height: 20),
               Text('enter_email_password'.tr(), style: const TextStyle(fontSize: 16)),
               const SizedBox(height: 20),
               TextField(

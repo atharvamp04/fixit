@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:easy_localization/easy_localization.dart';
-
+import 'screens/splash_screen.dart';
 import 'screens/home_page.dart';
 import 'screens/login_page.dart';
 import 'screens/signup_page.dart';
@@ -58,13 +58,15 @@ class MyApp extends StatelessWidget {
       locale: context.locale,
       supportedLocales: context.supportedLocales,
       localizationsDelegates: context.localizationDelegates,
-      initialRoute: '/',
+      initialRoute: '/splash',
       onGenerateRoute: _generateRoute,
     );
   }
 
   Route<dynamic> _generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case '/splash':
+        return MaterialPageRoute(builder: (_) => SplashScreen());
       case '/':
         return MaterialPageRoute(builder: (_) =>  AuthChecker());
       case '/home':
