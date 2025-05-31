@@ -227,7 +227,7 @@ class _SignupPageState extends State<SignupPage> {
           hintText: 'Enter your $label',
           suffixIcon: Icon(
             icon,
-            color: focusNode.hasFocus ? const Color(0xFFEFE516) : Colors.grey,
+            color: focusNode.hasFocus ? Colors.yellow[600] : Colors.grey,
           ),
           focusedBorder: const UnderlineInputBorder(
             borderSide: BorderSide(color: Color(0xFFEFE516)),
@@ -246,7 +246,7 @@ class _SignupPageState extends State<SignupPage> {
         child: ElevatedButton(
           onPressed: _isLoading ? null : signUp,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFEFE516),
+            backgroundColor: Colors.yellow[600],
             padding: const EdgeInsets.symmetric(vertical: 15),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(30.0),
@@ -359,7 +359,7 @@ class _SignupPageState extends State<SignupPage> {
                     suffixIcon: IconButton(
                       icon: Icon(
                         _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                        color: _passwordFocus.hasFocus ? const Color(0xFFEFE516) : Colors.grey,
+                        color: _passwordFocus.hasFocus ? Colors.yellow[600] : Colors.grey,
                       ),
                       onPressed: () {
                         setState(() {
@@ -387,7 +387,7 @@ class _SignupPageState extends State<SignupPage> {
                     suffixIcon: IconButton(
                       icon: Icon(
                         _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                        color: _confirmPasswordFocus.hasFocus ? const Color(0xFFEFE516) : Colors.grey,
+                        color: _confirmPasswordFocus.hasFocus ?Colors.yellow[600] : Colors.grey,
                       ),
                       onPressed: () {
                         setState(() {

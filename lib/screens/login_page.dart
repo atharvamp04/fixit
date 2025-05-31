@@ -172,7 +172,7 @@ class _LoginPageState extends State<LoginPage> {
                   suffixIcon: IconButton(
                     icon: Icon(
                       _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                      color: _passwordFocusNode.hasFocus ? const Color(0xFFEFE516) : Colors.grey,
+                      color: _passwordFocusNode.hasFocus ? Colors.yellow[600] : Colors.grey,
                     ),
                     onPressed: () {
                       setState(() {
@@ -203,7 +203,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : signIn,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFEFE516),
+                      backgroundColor: Colors.yellow[600],
                       padding: const EdgeInsets.symmetric(vertical: 15),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30.0),

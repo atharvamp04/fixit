@@ -310,7 +310,7 @@ class _BillScreenState extends State<BillScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFFEFE516),
+        backgroundColor: Colors.yellow[600],
         title: Text(
           'bill_form.title'.tr(),
           style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white),
@@ -425,7 +425,7 @@ class _BillScreenState extends State<BillScreen> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFEFE516),
+                        backgroundColor: Colors.yellow[600],
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30.0),

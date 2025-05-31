@@ -195,7 +195,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFFEFE516) : Colors.grey[300],
+                    color: isSelected ? Colors.yellow[600] : Colors.grey[300],
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
@@ -223,7 +223,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(tr('profile'), style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white)),
-        backgroundColor: const Color(0xFFEFE516),
+        backgroundColor: Colors.yellow[600],
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -291,7 +291,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _updateProfile,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFEFE516),
+                      backgroundColor: Colors.yellow[600],
                       padding: const EdgeInsets.symmetric(vertical: 15),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
                     ),

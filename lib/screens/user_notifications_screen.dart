@@ -70,7 +70,7 @@ class _UserNotificationsScreenState extends State<UserNotificationsScreen> {
             fontWeight: FontWeight.w800,
           ),
         ),
-        backgroundColor: const Color(0xFFF8F13F),
+        backgroundColor: Colors.yellow[600],
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())

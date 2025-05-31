@@ -169,7 +169,7 @@ class _ManagerNotificationsScreenState
             fontWeight: FontWeight.w800,
           ),
         ),
-        backgroundColor: const Color(0xFFF8F13F),
+        backgroundColor: Colors.yellow[600],
         actions: [
           IconButton(
             icon: Icon(Icons.upload_file, color: Colors.white),
@@ -291,7 +291,7 @@ class _ManagerNotificationsScreenState
                           },
                           icon: const Icon(Icons.check_circle, color: Colors.white),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.yellow,
+                            backgroundColor: Colors.yellow[600],
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),

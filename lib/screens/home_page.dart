@@ -129,7 +129,7 @@ class _HomePageState extends State<HomePage> {
           type: BottomNavigationBarType.fixed,
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
-          selectedItemColor: const Color(0xFFEFE516),
+          selectedItemColor: Colors.yellow[600],
           unselectedItemColor: Colors.grey,
           showUnselectedLabels: true,
           items: _bottomNavItems,

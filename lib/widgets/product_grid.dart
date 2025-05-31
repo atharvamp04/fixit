@@ -177,7 +177,7 @@ class _ProductCardState extends State<ProductCard> {
                 child: TextButton(
                   onPressed: () => setState(() => isExpanded = !isExpanded),
                   style: TextButton.styleFrom(
-                    backgroundColor: const Color(0xFFEFE516),
+                    backgroundColor: Colors.yellow[600],
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
