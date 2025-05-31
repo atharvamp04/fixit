@@ -31,6 +31,8 @@ dependencies:
   file_picker: ^10.1.9
   csv: ^5.0.0
   excel: ^2.0.7
+  share_plus: ^11.0.0    # bump to 11.x so it depends on win32: ^5.x
+  path_provider: ^2.0.14
 
 
 dev_dependencies:
@@ -69,6 +71,10 @@ flutter:
     - assets/stamp.png
     - assets/applogo_removebg.jpeg
     - assets/fonts/Roboto-Regular.ttf
+    - assets/fonts/OpenSans-Regular.ttf
+    - assets/fonts/OpenSans-Bold.ttf
+    - assets/fonts/OpenSans-Italic.ttf
+    - assets/fonts/OpenSans-BoldItalic.ttf
   fonts:
     - family: Roboto
       fonts:

@@ -17,17 +17,27 @@ Future<Uint8List> generatePdf({
   required List<Map<String, dynamic>> selectedProducts,
 }) async {
   // Load a custom font (e.g., Roboto-Regular) that supports Unicode.
-  final fontData = await rootBundle.load("assets/fonts/Roboto-Regular.ttf");
-  final ttf = pw.Font.ttf(fontData);
+  // Replace the old Roboto load with OpenSans variants:
+  final regularFontData = await rootBundle.load("assets/fonts/OpenSans-Regular.ttf");
+  final boldFontData    = await rootBundle.load("assets/fonts/OpenSans-Bold.ttf");
+  final italicFontData  = await rootBundle.load("assets/fonts/OpenSans-Italic.ttf");
+  final boldItalicData  = await rootBundle.load("assets/fonts/OpenSans-BoldItalic.ttf");
+
+// Register those font streams with the pdf document:
+  final regularFont   = pw.Font.ttf(regularFontData);
+  final boldFont      = pw.Font.ttf(boldFontData);
+  final italicFont    = pw.Font.ttf(italicFontData);
+  final boldItalicFont= pw.Font.ttf(boldItalicData);
 
   final pdf = pw.Document(
     theme: pw.ThemeData.withFont(
-      base: ttf,
-      bold: ttf,
-      italic: ttf,
-      boldItalic: ttf,
+      base:       regularFont,
+      bold:       boldFont,
+      italic:     italicFont,
+      boldItalic: boldItalicFont,
     ),
   );
+
 
   try {
     // Load assets.
