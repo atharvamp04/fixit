@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../screens/payment_confirmation_screen.dart';
+
 
 class BillSummaryBottomSheet extends StatelessWidget {
   final double subtotal;
@@ -118,12 +120,17 @@ class BillSummaryBottomSheet extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: isChecked
-                        ? () {
-                      Navigator.pop(context);
-                      onConfirmDownload();
-                    }
-                        : null,
+                      onPressed: isChecked
+                          ? () {
+                        Navigator.pop(context); // Close bottom sheet
+                        onConfirmDownload(); // Optional callback
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => PaymentConfirmationScreen()),
+                        );
+                      }
+                          : null,
+
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
                       disabledBackgroundColor: Colors.grey[400],
