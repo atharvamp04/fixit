@@ -162,15 +162,50 @@ class _CsvUploadPageState extends State<CsvUploadPage> {
       debugPrint('Deleting all rows in $tableName...');
       await supabase.from(tableName).delete().gt('id', 0);
 
+      // Reset the ID sequence for the specified table
+      if (tableName == 'products') {
+        final response = await supabase.rpc('reset_products_table');
+        if (response == null) {
+          print("✅ Products table reset successfully.");
+        } else {
+          print("❌ Error resetting products table: $response");
+        }
+      } else if (tableName == 'atomberg') {
+        final response = await supabase.rpc('reset_atomberg_table');
+        if (response == null) {
+          print("✅ Atomberg table reset successfully.");
+        } else {
+          print("❌ Error resetting atomberg table: $response");
+        }
+      } else {
+        print("⚠️ Unknown table name: $tableName. Skipping reset.");
+      }
+
       debugPrint('Inserting ${data.length} rows into $tableName...');
       await supabase.from(tableName).insert(data);
-
       debugPrint('Upload successful to $tableName!');
+
+      // Log the update event in updates_log table
+      final user = supabase.auth.currentUser;
+      if (user != null) {
+        await supabase.from('updates').insert({
+          'user_id': user.id,
+          'email': user.email ?? '',
+          'updated_table': tableName,
+          // 'updated_at' timestamp assumed to be set by DB default (e.g., now())
+        });
+        print("📋 Upload event logged for user ${user.email} on table $tableName");
+      } else {
+        print("⚠️ No logged-in user found to log upload event.");
+      }
     } catch (e) {
       debugPrint('Upload failed for $tableName: $e');
       throw e;
     }
   }
+
+
+
 
   Future<void> _pickAndUploadStockCSV() async {
     setState(() {

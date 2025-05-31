@@ -1,9 +1,11 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-import 'dart:async';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../services/wit_ai_service.dart';
 import '../widgets/product_grid.dart';
 import '../widgets/animated_chat_bubble.dart';
@@ -20,21 +22,24 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-  final WitAIService _witAIService = WitAIService();
   final ScrollController _scrollController = ScrollController();
+  final WitAIService _witAIService = WitAIService();
 
   List<Map<String, dynamic>> messages = [];
   bool isLoading = false;
   int hintIndex = 0;
   Timer? _hintTimer;
+  String lastUpdateText = "";
 
   @override
   void initState() {
     super.initState();
     _loadChatHistory();
     _startHintAnimation();
+    _fetchLastUpdate();
+
     _focusNode.addListener(() {
-      setState(() {}); // triggers rebuild when focus changes
+      setState(() {});
     });
   }
 
@@ -47,7 +52,7 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  /// Generates localized hint messages.
+  /// Hint message animation
   List<String> _getHintMessages() {
     return [
       "ask_about_products".tr(),
@@ -68,18 +73,54 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+  /// Fetch last update time from Supabase
+  Future<void> _fetchLastUpdate() async {
+    final supabase = Supabase.instance.client;
+
+    try {
+      final response = await supabase
+          .from('updates')
+          .select('updated_at')
+          .eq('updated_table', 'products')
+          .order('updated_at', ascending: false)
+          .limit(1)
+          .single();
+
+      if (response != null) {
+        DateTime updatedAt = DateTime.parse(response['updated_at']);
+        setState(() {
+          lastUpdateText = _formatTimeAgo(updatedAt);
+        });
+      } else {
+        setState(() {
+          lastUpdateText = "No updates found";
+        });
       }
-    });
+    } catch (e) {
+      setState(() {
+        lastUpdateText = "Failed to fetch update time";
+      });
+    }
   }
 
+  String _formatTimeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inSeconds < 60) {
+      return '  Updated just now';
+    } else if (difference.inMinutes < 60) {
+      return '  Updated ${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
+    } else if (difference.inHours < 24) {
+      return '  Updated ${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
+    } else if (difference.inDays == 1) {
+      return '  Updated yesterday';
+    } else {
+      return '  Updated ${difference.inDays} days ago';
+    }
+  }
+
+  /// Load chat history
   void _loadChatHistory() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? chatHistory = prefs.getString(widget.sessionId);
@@ -96,11 +137,26 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  /// Save chat history
   void _saveChatHistory() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString(widget.sessionId, jsonEncode(messages));
   }
 
+  /// Scroll to bottom
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  /// Send message to chatbot
   void _sendMessage() async {
     if (_controller.text.trim().isEmpty) return;
 
@@ -140,8 +196,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  /// Updated new chat session method.
-  /// If the current route can be popped, use pushReplacement; otherwise, simply push a new ChatScreen.
+  /// Start a new chat session
   void _startNewChat() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString(widget.sessionId, jsonEncode(messages));
@@ -164,16 +219,36 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  /// Build UI
   @override
   Widget build(BuildContext context) {
     final hintMessages = _getHintMessages();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.yellow[600],
-        title: Text(
-          "chat".tr(),
-          style: const TextStyle(
-              fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white),
+        title: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              "chat".tr(),
+              style: const TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 10),
+            if (lastUpdateText.isNotEmpty)
+              Text(
+                  lastUpdateText,
+                style: const TextStyle(
+                  fontSize: 14, // Slightly bigger
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+          ],
         ),
         actions: [
           IconButton(
@@ -182,13 +257,14 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
+
+
       body: Column(
         children: [
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
-              padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               itemCount: messages.length,
               itemBuilder: (context, index) {
                 final msg = messages[index];
@@ -208,8 +284,7 @@ class _ChatScreenState extends State<ChatScreen> {
           if (isLoading)
             const Padding(
               padding: EdgeInsets.all(8.0),
-              child: CircularProgressIndicator(
-                  color: Color(0xFFEFE516)),
+              child: CircularProgressIndicator(color: Color(0xFFEFE516)),
             ),
           Padding(
             padding: const EdgeInsets.all(12.0),
@@ -227,8 +302,8 @@ class _ChatScreenState extends State<ChatScreen> {
                           horizontal: 16, vertical: 12),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30),
-                        borderSide: const BorderSide(
-                            color: Colors.grey, width: 1),
+                        borderSide:
+                        const BorderSide(color: Colors.grey, width: 1),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30),
@@ -248,8 +323,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       shape: BoxShape.circle,
                       color: Color(0xFFF8F13F),
                     ),
-                    child:
-                    const Icon(Icons.send, color: Colors.white),
+                    child: const Icon(Icons.send, color: Colors.white),
                   ),
                 ),
               ],
