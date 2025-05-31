@@ -126,8 +126,8 @@ class _ProductCardState extends State<ProductCard> {
     final product = widget.product;
     String productName = product['Product Description'] ?? 'N/A';
     String location = product['Location Name'] ?? 'N/A';
-    int stock = product['Quantity On Hand'] ?? 0;
-    int price = product['Product Price'] ?? 0;
+    int stock = (product['Quantity On Hand'] as num?)?.toInt() ?? 0;
+
     String productCode = product['Product Code'] ?? 'N/A';
     String details = product['Concatenate'] ?? '';
 
@@ -169,8 +169,7 @@ class _ProductCardState extends State<ProductCard> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text("Price: ₹$price", style: const TextStyle(fontSize: 14, color: Colors.black87)),
+
               const SizedBox(height: 4),
               Text("Stock: $stock units", style: const TextStyle(fontSize: 14, color: Colors.black54)),
               const SizedBox(height: 8),
