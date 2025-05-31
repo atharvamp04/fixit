@@ -5,12 +5,20 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:fixit/services/slip_service.dart';
+import 'csv_upload_page.dart';
+
+
+
 
 class ManagerNotificationsScreen extends StatefulWidget {
   @override
   _ManagerNotificationsScreenState createState() =>
       _ManagerNotificationsScreenState();
 }
+
+
+
+
 
 class _ManagerNotificationsScreenState
     extends State<ManagerNotificationsScreen> {
@@ -162,7 +170,21 @@ class _ManagerNotificationsScreenState
           ),
         ),
         backgroundColor: const Color(0xFFF8F13F),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.upload_file, color: Colors.white),
+            tooltip: 'Upload CSV',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CsvUploadPage()),
+              );
+            },
+          ),
+
+        ],
       ),
+
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
           : _notifications.isEmpty

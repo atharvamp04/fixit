@@ -169,7 +169,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final hintMessages = _getHintMessages();
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F13F),
+        backgroundColor: Colors.yellow[600],
         title: Text(
           "chat".tr(),
           style: const TextStyle(
