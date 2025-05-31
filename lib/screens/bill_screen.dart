@@ -238,23 +238,28 @@ class _BillScreenState extends State<BillScreen> {
 
   /// Allows the technician to share/download the generated PDF.
   void handleSharePdf() {
-    if (generatedPdfBytes != null) {
+    // Double‐guard: ensure generatedPdfBytes is neither null nor empty.
+    if (generatedPdfBytes != null && generatedPdfBytes!.isNotEmpty) {
       try {
         Printing.sharePdf(
           bytes: generatedPdfBytes!,
-          filename: "${invoiceNumberController.text}_${customerEmailController.text}.pdf",
+          filename:
+          "${invoiceNumberController.text}_${customerEmailController.text}.pdf",
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error sharing PDF: $e")),
+          SnackBar(
+            content: Text('error_sharing_pdf'.tr(args: [e.toString()])),
+          ),
         );
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please generate an invoice first.")),
+        SnackBar(content: Text('generate_invoice_first'.tr())),
       );
     }
   }
+
 
   void showBillSummaryBottomSheet(
       BuildContext context,
@@ -317,10 +322,23 @@ class _BillScreenState extends State<BillScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.share, color: Colors.white),
-            onPressed: handleSharePdf,
+            icon: Icon(
+              Icons.share,
+              // Show gray when no PDF is ready; white when ready.
+              color: generatedPdfBytes == null || generatedPdfBytes!.isEmpty
+                  ? Colors.grey.shade400
+                  : Colors.white,
+            ),
+            // Disable the button entirely if generatedPdfBytes is null or empty.
+            onPressed: (generatedPdfBytes == null || generatedPdfBytes!.isEmpty)
+                ? null
+                : handleSharePdf,
+            tooltip: (generatedPdfBytes == null || generatedPdfBytes!.isEmpty)
+                ? 'generate_invoice_first'.tr()
+                : 'share_invoice'.tr(),
           )
         ],
+
       ),
       body: Stack(
         children: [
