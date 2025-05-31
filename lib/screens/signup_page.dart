@@ -25,8 +25,13 @@ class _SignupPageState extends State<SignupPage> {
   final FocusNode _fullNameFocus = FocusNode();
   final FocusNode _mobileNumberFocus = FocusNode();
   final FocusNode _genderFocus = FocusNode();
+  final _confirmPasswordController = TextEditingController(); // ← ADD THIS
+  final FocusNode _confirmPasswordFocus = FocusNode();
 
+  String? _selectedGender;
   bool _isLoading = false;
+  bool _isPasswordVisible = false;       // ← ADD THIS
+  bool _isConfirmPasswordVisible = false;
   final AuthService _authService = AuthService(Supabase.instance.client);
 
   @override
@@ -42,6 +47,9 @@ class _SignupPageState extends State<SignupPage> {
     _fullNameFocus.dispose();
     _mobileNumberFocus.dispose();
     _genderFocus.dispose();
+    // Dispose the new controllers/focus nodes:
+    _confirmPasswordController.dispose(); // ← ADD THIS
+    _confirmPasswordFocus.dispose();
 
     super.dispose();
   }
@@ -54,14 +62,22 @@ class _SignupPageState extends State<SignupPage> {
     final fullName = _fullNameController.text.trim();
     final mobileNumber = _mobileNumberController.text.trim();
     final gender = _genderController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
 
     if (email.isEmpty ||
         password.isEmpty ||
+        confirmPassword.isEmpty ||
         fullName.isEmpty ||
         mobileNumber.isEmpty ||
         gender.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields')),
+      );
+      return;
+    }
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match')),
       );
       return;
     }
@@ -316,7 +332,7 @@ class _SignupPageState extends State<SignupPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 100),
+              const SizedBox(height: 55),
               Text(
                 'create_account'.tr(),
                 style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
@@ -327,15 +343,89 @@ class _SignupPageState extends State<SignupPage> {
                 style: const TextStyle(fontSize: 16, color: Colors.grey),
               ),
               const SizedBox(height: 20),
+              _buildTextField(_fullNameController, 'full_name'.tr(), Icons.person, _fullNameFocus),
+              const SizedBox(height: 10),
               _buildTextField(_emailController, 'email'.tr(), Icons.email, _emailFocus),
               const SizedBox(height: 10),
-              _buildTextField(_passwordController, 'password'.tr(), Icons.lock, _passwordFocus, obscureText: true),
+              Focus(
+                onFocusChange: (hasFocus) => setState(() {}),
+                child: TextField(
+                  controller: _passwordController,
+                  focusNode: _passwordFocus,
+                  obscureText: !_isPasswordVisible, // ← toggle
+                  decoration: InputDecoration(
+                    labelText: 'password'.tr(),
+                    hintText: 'enter_password'.tr(),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                        color: _passwordFocus.hasFocus ? const Color(0xFFEFE516) : Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
+                    focusedBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFFEFE516)),
+                    ),
+                  ),
+                ),
+              ),
               const SizedBox(height: 10),
-              _buildTextField(_fullNameController, 'full_name'.tr(), Icons.person, _fullNameFocus),
+
+              Focus(
+                onFocusChange: (hasFocus) => setState(() {}),
+                child: TextField(
+                  controller: _confirmPasswordController,   // new controller
+                  focusNode: _confirmPasswordFocus,         // new focus node
+                  obscureText: !_isConfirmPasswordVisible,   // toggle
+                  decoration: InputDecoration(
+                    labelText: 'confirm_password'.tr(),      // Add key in your JSON as “confirm_password”
+                    hintText: 'reenter_password'.tr(),       // Add key in JSON as “reenter_password”
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                        color: _confirmPasswordFocus.hasFocus ? const Color(0xFFEFE516) : Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                        });
+                      },
+                    ),
+                    focusedBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFFEFE516)),
+                    ),
+                  ),
+                ),
+              ),
               const SizedBox(height: 10),
               _buildTextField(_mobileNumberController, 'mobile_number'.tr(), Icons.phone, _mobileNumberFocus),
               const SizedBox(height: 10),
-              _buildTextField(_genderController, 'gender'.tr(), Icons.accessibility, _genderFocus),
+              Text('gender'.tr(), style: const TextStyle(fontSize: 16)),
+              DropdownButtonFormField<String>(
+                value: _selectedGender,
+                decoration: InputDecoration(
+                  border: const UnderlineInputBorder(),
+                  focusedBorder: const UnderlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFFEFE516)),
+                  ),
+                ),
+                items: <String>['Male', 'Female', 'Other']
+                    .map((g) => DropdownMenuItem(
+                  value: g,
+                  child: Text(g.tr()), // if you have translations for "Male"/"Female"/"Other"
+                ))
+                    .toList(),
+                onChanged: (val) {
+                  setState(() {
+                    _selectedGender = val;
+                  });
+                },
+                validator: (val) => val == null ? 'please_select_gender'.tr() : null,
+              ),
               const SizedBox(height: 20),
               _buildSignupButton(),
               const SizedBox(height: 20),

@@ -24,6 +24,8 @@
   "profile_update_failed": "Error updating profile: {}",
   "logout": "Logout",
   "full_name": "Full Name",
+  "confirm_password": "Confirm Password",
+  "reenter_password": "Re-enter your password",
   "mobile_number": "Mobile Number",
   "date_of_birth": "Date of Birth",
   "social_links": "Social Links",

@@ -18,6 +18,8 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _rememberMe = false;
   bool _isLoading = false;
+  bool _isPasswordVisible = false;
+
   final AuthService _authService = AuthService(Supabase.instance.client);
 
   Future<void> signIn() async {
@@ -163,19 +165,27 @@ class _LoginPageState extends State<LoginPage> {
               TextField(
                 controller: _passwordController,
                 focusNode: _passwordFocusNode,
-                obscureText: true,
+                obscureText: !_isPasswordVisible,
                 decoration: InputDecoration(
                   labelText: 'password'.tr(),
                   hintText: 'enter_password'.tr(),
-                  suffixIcon: Icon(
-                    Icons.lock,
-                    color: _passwordFocusNode.hasFocus ? const Color(0xFFEFE516) : Colors.grey,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      color: _passwordFocusNode.hasFocus ? const Color(0xFFEFE516) : Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
                   ),
                   focusedBorder: const UnderlineInputBorder(
                     borderSide: BorderSide(color: Color(0xFFEFE516)),
                   ),
                 ),
               ),
+
               const SizedBox(height: 10),
               Row(
                 children: [
