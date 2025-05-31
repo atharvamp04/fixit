@@ -39,7 +39,6 @@
   "default_profile_image": "assets/default_profile.png",
   "generate_invoice_first": "Please generate an invoice first.",
   "share_invoice": "Share Invoice",
-  "error_sharing_pdf": "Error sharing PDF: {0}",
   "chat": "Chat",
   "history": "History",
   "bill": "Bill",
