@@ -17,14 +17,12 @@ class _SignupPageState extends State<SignupPage> {
   final _passwordController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _mobileNumberController = TextEditingController();
-  final _genderController = TextEditingController();
 
   // Focus nodes for UI behavior.
   final FocusNode _emailFocus = FocusNode();
   final FocusNode _passwordFocus = FocusNode();
   final FocusNode _fullNameFocus = FocusNode();
   final FocusNode _mobileNumberFocus = FocusNode();
-  final FocusNode _genderFocus = FocusNode();
   final _confirmPasswordController = TextEditingController(); // ← ADD THIS
   final FocusNode _confirmPasswordFocus = FocusNode();
 
@@ -40,13 +38,11 @@ class _SignupPageState extends State<SignupPage> {
     _passwordController.dispose();
     _fullNameController.dispose();
     _mobileNumberController.dispose();
-    _genderController.dispose();
 
     _emailFocus.dispose();
     _passwordFocus.dispose();
     _fullNameFocus.dispose();
     _mobileNumberFocus.dispose();
-    _genderFocus.dispose();
     // Dispose the new controllers/focus nodes:
     _confirmPasswordController.dispose(); // ← ADD THIS
     _confirmPasswordFocus.dispose();
@@ -61,7 +57,7 @@ class _SignupPageState extends State<SignupPage> {
     final password = _passwordController.text.trim();
     final fullName = _fullNameController.text.trim();
     final mobileNumber = _mobileNumberController.text.trim();
-    final gender = _genderController.text.trim();
+    final gender = _selectedGender;  // <-- use the dropdown’s value
     final confirmPassword = _confirmPasswordController.text.trim();
 
     if (email.isEmpty ||
@@ -69,7 +65,7 @@ class _SignupPageState extends State<SignupPage> {
         confirmPassword.isEmpty ||
         fullName.isEmpty ||
         mobileNumber.isEmpty ||
-        gender.isEmpty) {
+        gender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields')),
       );
