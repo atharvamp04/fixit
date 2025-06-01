@@ -108,15 +108,15 @@ class _ChatScreenState extends State<ChatScreen> {
     final difference = now.difference(dateTime);
 
     if (difference.inSeconds < 60) {
-      return '  Updated just now';
+      return 'Inventory Updated just now';
     } else if (difference.inMinutes < 60) {
-      return '  Updated ${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
+      return 'Inventory Updated ${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
     } else if (difference.inHours < 24) {
-      return '  Updated ${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
+      return 'Inventory Updated ${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
     } else if (difference.inDays == 1) {
-      return '  Updated yesterday';
+      return 'Inventory Updated yesterday';
     } else {
-      return '  Updated ${difference.inDays} days ago';
+      return 'Inventory Updated ${difference.inDays} days ago';
     }
   }
 
@@ -243,8 +243,8 @@ class _ChatScreenState extends State<ChatScreen> {
               Text(
                   lastUpdateText,
                 style: const TextStyle(
-                  fontSize: 14, // Slightly bigger
-                  color: Colors.white70,
+                  fontSize: 12, // Slightly bigger
+                  color: Colors.white,
                   fontWeight: FontWeight.w500,
                 ),
               ),

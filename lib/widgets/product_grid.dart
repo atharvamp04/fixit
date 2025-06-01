@@ -46,15 +46,16 @@ class ProductCard extends StatefulWidget {
 
 class _ProductCardState extends State<ProductCard> {
   bool isExpanded = false;
+  int _selectedQuantity = 1; // ✅ Quantity selector
   final MailService mailService = MailService();
   final SupabaseClient supabase = Supabase.instance.client;
-  final Uuid uuid = Uuid(); // ✅ Define Uuid instance
+  final Uuid uuid = Uuid();
 
   Future<String?> _fetchManagerId(String userEmail) async {
     final response = await supabase
-        .from('profiles')  // Fetch from profile instead of notifications
+        .from('profiles')
         .select('id')
-        .eq('email', userEmail) // Assuming manager is identified by email
+        .eq('email', userEmail)
         .maybeSingle();
 
     return response?['id'];
@@ -63,8 +64,8 @@ class _ProductCardState extends State<ProductCard> {
   Future<void> _sendNotificationToManager() async {
     final product = widget.product;
     String productName = product['Product Description'] ?? 'N/A';
-    int stock = ((product['Quantity On Hand'] ?? 0) as num).toInt(); // ✅ Fixed type casting
-    String managerEmail = "mohite0404@gmail.com";
+    int stock = ((product['Quantity On Hand'] ?? 0) as num).toInt();
+    String managerEmail = "2022.atharva.phadtare@ves.ac.in";
 
     String? managerId = await _fetchManagerId(managerEmail);
     if (managerId == null) {
@@ -76,29 +77,32 @@ class _ProductCardState extends State<ProductCard> {
 
     final notificationPayload = {
       "title": "Stock Alert: $productName",
-      "message": "Stock is low: Only $stock units left!",
+      "message":
+      "Requesting $_selectedQuantity unit(s). Stock left: $stock units.",
       "managerId": managerId,
+      "productName": productName,
+      "quantity": _selectedQuantity,
     };
 
     try {
-      // Send notification via HTTP API
       final notificationResponse = await http.post(
         Uri.parse('https://your-api.com/send-notification'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(notificationPayload),
       );
 
-      // Send email
+      // ✅ Update this line to include quantity
       await mailService.sendStockRequestEmail(
         managerEmail: managerEmail,
         productName: productName,
         stock: stock,
+        quantity: _selectedQuantity,
       );
 
-      // Insert notification in Supabase
       await supabase.from('notifications').insert({
-        'id': const Uuid().v4(),
-        'message': "Stock Alert: $productName - Only $stock left!",
+        'id': uuid.v4(),
+        'message':
+        "Stock Alert: $productName - Requesting $_selectedQuantity unit(s). Stock left: $stock.",
         'created_at': DateTime.now().toIso8601String(),
         'manager_id': managerId,
         'is_read': false,
@@ -150,54 +154,105 @@ class _ProductCardState extends State<ProductCard> {
             children: [
               Text(
                 productName,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.bold),
                 maxLines: 4,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                  const Icon(Icons.location_on,
+                      size: 16, color: Colors.grey),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       location,
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      style: const TextStyle(
+                          fontSize: 14, color: Colors.grey),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
-
               const SizedBox(height: 4),
-              Text("Stock: $stock units", style: const TextStyle(fontSize: 14, color: Colors.black54)),
+              Text("Stock: $stock units",
+                  style: const TextStyle(
+                      fontSize: 14, color: Colors.black54)),
               const SizedBox(height: 8),
               Center(
                 child: TextButton(
                   onPressed: () => setState(() => isExpanded = !isExpanded),
                   style: TextButton.styleFrom(
                     backgroundColor: const Color(0xFFEFE516),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: Text(isExpanded ? "Hide Details" : "View Details", style: const TextStyle(fontSize: 14, color: Colors.white)),
+                  child: Text(isExpanded ? "Hide Details" : "View Details",
+                      style: const TextStyle(
+                          fontSize: 14, color: Colors.white)),
                 ),
               ),
               if (isExpanded) ...[
                 const SizedBox(height: 8),
                 const Divider(),
                 const SizedBox(height: 8),
-                Text("Product Code: $productCode", style: const TextStyle(fontSize: 14, color: Colors.black87)),
+                Text("Product Code: $productCode",
+                    style: const TextStyle(
+                        fontSize: 14, color: Colors.black87)),
                 const SizedBox(height: 4),
-                Text("Details: $details", style: const TextStyle(fontSize: 12, color: Colors.black54), maxLines: 3, overflow: TextOverflow.ellipsis),
+                Text("Details: $details",
+                    style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black54),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 8),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: _sendNotificationToManager,
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red, padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                    child: const Text("Request", style: TextStyle(fontSize: 14, color: Colors.white)),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle,
+                              color: Colors.red),
+                          onPressed: () {
+                            setState(() {
+                              if (_selectedQuantity > 1)
+                                _selectedQuantity--;
+                            });
+                          },
+                        ),
+                        Text('$_selectedQuantity',
+                            style: const TextStyle(fontSize: 16)),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle,
+                              color: Colors.green),
+                          onPressed: () {
+                            setState(() {
+                              _selectedQuantity++;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    ElevatedButton(
+                      onPressed: _sendNotificationToManager,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text("Request",
+                          style:
+                          TextStyle(fontSize: 14, color: Colors.white)),
+                    ),
+                  ],
                 ),
               ],
             ],

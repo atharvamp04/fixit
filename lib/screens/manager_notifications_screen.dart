@@ -7,24 +7,17 @@ import 'package:printing/printing.dart';
 import 'package:fixit/services/slip_service.dart';
 import 'csv_upload_page.dart';
 
-
-
-
 class ManagerNotificationsScreen extends StatefulWidget {
   @override
   _ManagerNotificationsScreenState createState() =>
       _ManagerNotificationsScreenState();
 }
 
-
-
-
-
 class _ManagerNotificationsScreenState
     extends State<ManagerNotificationsScreen> {
   List<Map<String, dynamic>> _notifications = [];
   bool _isLoading = true;
-  List<Map<String, dynamic>> _requesterAlerts = [];  // Store requester alerts
+  List<Map<String, dynamic>> _requesterAlerts = []; // Store requester alerts
 
   @override
   void initState() {
@@ -57,13 +50,13 @@ class _ManagerNotificationsScreenState
     final notifications = await fetchManagerNotifications(managerId);
 
     // Fetch requester alerts
-    final requesterAlerts = await fetchRequesterAlerts(managerId);  // Fetch alerts for the manager
+    final requesterAlerts = await fetchRequesterAlerts(managerId); // Fetch alerts for the manager
 
     if (!mounted) return;
 
     setState(() {
       _notifications = notifications;
-      _requesterAlerts = requesterAlerts;  // Set requester alerts
+      _requesterAlerts = requesterAlerts; // Set requester alerts
       _isLoading = false;
     });
   }
@@ -108,7 +101,9 @@ class _ManagerNotificationsScreenState
                 pw.SizedBox(height: 10),
                 pw.Divider(thickness: 1.5, color: PdfColors.grey600),
                 pw.SizedBox(height: 20),
-                pw.Text('Details:', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                pw.Text('Details:',
+                    style: pw.TextStyle(
+                        fontSize: 18, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(height: 10),
                 _buildRow('Product Name:', productName),
                 _buildRow('Requested By:', requestedBy),
@@ -181,10 +176,8 @@ class _ManagerNotificationsScreenState
               );
             },
           ),
-
         ],
       ),
-
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
           : _notifications.isEmpty
@@ -225,6 +218,8 @@ class _ManagerNotificationsScreenState
               ? profiles['email']
               : 'Unknown Email';
 
+          final requestedQty = notification['requested_quantity']?.toString() ?? 'N/A';
+
           // Skip card if requestedBy is Unknown
           if (requestedBy == 'Unknown') {
             return SizedBox.shrink();
@@ -244,23 +239,36 @@ class _ManagerNotificationsScreenState
             },
             child: Card(
               elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              margin: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 8),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // You can put title/subtitle of notification here
+                    // Title/subtitle of notification
                     Text(
                       productName,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       "Requested by: $requestedBy",
-                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                      style: TextStyle(
+                          fontSize: 14, color: Colors.grey[700]),
                     ),
+
+                    // New requested quantity below requested by
+                    const SizedBox(height: 4),
+                    Text(
+                      "Requested Qty: $requestedQty",
+                      style: TextStyle(
+                          fontSize: 14, color: Colors.grey[700]),
+                    ),
+
                     const SizedBox(height: 16),
 
                     /// Buttons row here
@@ -272,7 +280,8 @@ class _ManagerNotificationsScreenState
                             final requesterId = notification['requested_by'];
 
                             final mailService = MailService();
-                            final pdf = await _generatePdf(productName, requestedBy);
+                            final pdf =
+                            await _generatePdf(productName, requestedBy);
                             final pdfBytes = await pdf.save();
 
                             await mailService.sendCourierConfirmationSlip(
@@ -284,19 +293,26 @@ class _ManagerNotificationsScreenState
 
                             await sendNotificationToRequester(
                               recipientId: requesterId,
-                              message: '✅ Your request for "$productName" has been accepted and couriered.',
+                              message:
+                              '✅ Your request for "$productName" has been accepted and couriered.',
                             );
 
                             _markAsRead(notification['id']);
                           },
-                          icon: const Icon(Icons.check_circle, color: Colors.white),
+                          icon: const Icon(Icons.check_circle,
+                              color: Colors.white),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.yellow,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                                borderRadius:
+                                BorderRadius.circular(10)),
                           ),
-                          label: const Text("Accept",
-                            style: TextStyle(color: Colors.black),),
+                          label: const Text(
+                            "Accept",
+                            style: TextStyle(color: Colors.black),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         ElevatedButton.icon(
@@ -312,20 +328,26 @@ class _ManagerNotificationsScreenState
 
                             await sendNotificationToRequester(
                               recipientId: requesterId,
-                              message: '❌ Your request for "$productName" has been rejected by the manager.',
+                              message:
+                              '❌ Your request for "$productName" has been rejected by the manager.',
                             );
 
                             _markAsRead(notification['id']);
                           },
-                          icon: const Icon(Icons.cancel, color: Colors.white),
+                          icon:
+                          const Icon(Icons.cancel, color: Colors.white),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red,
-
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                                borderRadius:
+                                BorderRadius.circular(10)),
                           ),
-                          label: const Text("Reject",
-                            style: TextStyle(color: Colors.white),),
+                          label: const Text(
+                            "Reject",
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
                       ],
                     ),
@@ -333,7 +355,6 @@ class _ManagerNotificationsScreenState
                 ),
               ),
             ),
-
           );
         },
       ),
@@ -348,7 +369,7 @@ Future<List<Map<String, dynamic>>> fetchManagerNotifications(
   final result = await supabase
       .from('notifications')
       .select(
-      'id, message, created_at, requested_by, profiles:requested_by(full_name, email)')
+      'id, message, created_at, requested_by, requested_quantity, profiles:requested_by(full_name, email)')
       .eq('manager_id', managerId)
       .eq('is_read', false)
       .order('created_at', ascending: false);
@@ -383,15 +404,13 @@ Future<void> sendNotificationToRequester({
   }
 }
 
-
 Future<List<Map<String, dynamic>>> fetchRequesterAlerts(String requesterId) async {
   final supabase = Supabase.instance.client;
 
   final result = await supabase
       .from('notifications')
-      .select('id, message, created_at')
+      .select('id, message, created_at, is_read')
       .eq('requested_by', requesterId)
-      .eq('type', 'status-update') // ✅ filter only status-update notifications
       .order('created_at', ascending: false);
 
   if (result is List) {
