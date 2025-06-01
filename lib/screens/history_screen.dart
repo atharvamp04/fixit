@@ -27,20 +27,31 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
       if (chatHistoryJson != null && chatHistoryJson.isNotEmpty) {
         try {
-          List<dynamic> messages = jsonDecode(chatHistoryJson);
+          final decoded = jsonDecode(chatHistoryJson);
 
-          if (messages.isNotEmpty && messages is List) {
+          if (decoded is List) {
+
+            List<dynamic> messages = decoded;
+            print("Session $sessionId contents: $messages");
+
+            // Safely find first user message
             var firstUserMessage = messages.firstWhere(
                   (msg) => msg is Map<String, dynamic> && msg["sender"] == "user",
-              orElse: () => {"text": "No user messages"},
+              orElse: () => {"data": "No user messages"},
             );
 
-            String firstQuery = firstUserMessage["text"] ?? "No user messages";
+            String firstQuery = firstUserMessage["text"] ??
+                firstUserMessage["data"] ??
+                "No user messages";
+
+
 
             loadedSessions.add({
               "sessionId": sessionId,
               "firstQuery": firstQuery,
             });
+
+            print("Loaded session $sessionId, firstQuery: $firstQuery");
           }
         } catch (e) {
           print("Error parsing session $sessionId: $e");
@@ -48,10 +59,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
       }
     }
 
-    setState(() {
-      sessions = loadedSessions;
-    });
+    if (mounted) {
+      setState(() {
+        sessions = loadedSessions;
+      });
+    }
   }
+
+
 
   void _createNewSession() async {
     String sessionId = DateTime.now().millisecondsSinceEpoch.toString();
@@ -117,13 +132,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 child: Icon(Icons.chat, color: Colors.white),
               ),
               title: Text(
-                "${"chat".tr()} ${index + 1}",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              subtitle: Text(
                 sessions[index]["firstQuery"] ?? "No messages",
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              subtitle: Text(
+                "${"chat".tr()} ${index + 1}",
+
               ),
               trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey),
               onTap: () => _openSession(sessions[index]["sessionId"]!),
@@ -134,3 +150,5 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 }
+
+

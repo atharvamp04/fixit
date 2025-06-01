@@ -13,9 +13,9 @@ class MailService {
     required String managerEmail,
     required String productName,
     required int stock,
+    required int quantity,
   }) async {
     try {
-      // Step 1: Get authenticated user
       final user = supabase.auth.currentUser;
       if (user == null) {
         print('❌ Error: No authenticated user found');
@@ -23,9 +23,6 @@ class MailService {
       }
 
       final String userId = user.id;
-      print('🔍 Debug: Authenticated User UUID -> $userId');
-
-      // Step 2: Fetch full name from 'profiles' table
       final profileResponse = await supabase
           .from('profiles')
           .select('full_name')
@@ -39,7 +36,6 @@ class MailService {
 
       String senderName = profileResponse['full_name'] ?? 'User';
 
-      // Step 3: Prepare and send email
       final smtpServer = gmail(username, password);
       final message = Message()
         ..from = Address(username, 'fixit Stock Manager')
@@ -50,7 +46,7 @@ Dear Manager,
 
 The stock for "$productName" is currently low. Only $stock units are left.
 
-I would like to request 1 additional unit of this product.
+I would like to request $quantity additional unit(s) of this product.
 
 Please restock it as soon as possible.
 
@@ -60,9 +56,9 @@ $senderName
         ..html = '''
 <h3>📢 Stock Request: <span style="color:#ff6600;">$productName</span></h3>
 <p><b>Current Stock:</b> $stock units remaining</p>
-<p><b>Requested Quantity:</b> 1 unit</p>
+<p><b>Requested Quantity:</b> $quantity unit(s)</p>
 <p>Dear Manager,</p>
-<p>I need <b>1</b> more unit of <b>$productName</b>. Please arrange the stock at the earliest.</p>
+<p>I need <b>$quantity</b> more unit(s) of <b>$productName</b>. Please arrange the stock at the earliest.</p>
 <p>Best Regards,</p>
 <p><b>$senderName</b></p>
 ''';
@@ -70,7 +66,6 @@ $senderName
       final sendReport = await send(message, smtpServer);
       print('✅ Email sent successfully: ${sendReport.toString()}');
 
-      // Step 4: Get manager's UUID from profiles using email
       final managerProfile = await supabase
           .from('profiles')
           .select('id')
@@ -84,11 +79,12 @@ $senderName
 
       final String managerId = managerProfile['id'];
 
-      // Step 5: Insert notification
+      // Insert notification with requested quantity as separate field
       await supabase.from('notifications').insert({
         'manager_id': managerId,
-        'message': '$productName.',
+        'message': 'Stock Request for "$productName"',
         'requested_by': userId,
+        'requested_quantity': quantity,  // Here!
         'is_read': false,
       });
 
@@ -97,4 +93,5 @@ $senderName
       print('❌ Error in sendStockRequestEmail: $e');
     }
   }
+
 }
