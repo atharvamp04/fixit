@@ -34,7 +34,7 @@ dependencies:
   share_plus: ^11.0.0    # bump to 11.x so it depends on win32: ^5.x
   path_provider: ^2.0.14
   shared_preferences: ^2.2.2
-  collection: ^1.19.1
+  collection: ^1.19.0
 
 
 dev_dependencies:
