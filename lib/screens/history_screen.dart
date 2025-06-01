@@ -27,20 +27,31 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
       if (chatHistoryJson != null && chatHistoryJson.isNotEmpty) {
         try {
-          List<dynamic> messages = jsonDecode(chatHistoryJson);
+          final decoded = jsonDecode(chatHistoryJson);
 
-          if (messages.isNotEmpty && messages is List) {
+          if (decoded is List) {
+
+            List<dynamic> messages = decoded;
+            print("Session $sessionId contents: $messages");
+
+            // Safely find first user message
             var firstUserMessage = messages.firstWhere(
                   (msg) => msg is Map<String, dynamic> && msg["sender"] == "user",
-              orElse: () => {"text": "No user messages"},
+              orElse: () => {"data": "No user messages"},
             );
 
-            String firstQuery = firstUserMessage["text"] ?? "No user messages";
+            String firstQuery = firstUserMessage["text"] ??
+                firstUserMessage["data"] ??
+                "No user messages";
+
+
 
             loadedSessions.add({
               "sessionId": sessionId,
               "firstQuery": firstQuery,
             });
+
+            print("Loaded session $sessionId, firstQuery: $firstQuery");
           }
         } catch (e) {
           print("Error parsing session $sessionId: $e");
@@ -48,10 +59,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
       }
     }
 
-    setState(() {
-      sessions = loadedSessions;
-    });
+    if (mounted) {
+      setState(() {
+        sessions = loadedSessions;
+      });
+    }
   }
+
+
 
   void _createNewSession() async {
     String sessionId = DateTime.now().millisecondsSinceEpoch.toString();
