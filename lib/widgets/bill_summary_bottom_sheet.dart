@@ -120,16 +120,16 @@ class BillSummaryBottomSheet extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                      onPressed: isChecked
-                          ? () {
-                        Navigator.pop(context); // Close bottom sheet
-                        onConfirmDownload(); // Optional callback
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => PaymentConfirmationScreen()),
-                        );
-                      }
-                          : null,
+                    onPressed: isChecked
+                        ? () {
+                      Navigator.pop(context); // Close bottom sheet
+                      onConfirmDownload(); // Optional callback
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => PaymentConfirmationScreen()),
+                      );
+                    }
+                        : null,
 
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,

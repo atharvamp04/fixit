@@ -241,7 +241,7 @@ class _ChatScreenState extends State<ChatScreen> {
             const SizedBox(width: 10),
             if (lastUpdateText.isNotEmpty)
               Text(
-                  lastUpdateText,
+                lastUpdateText,
                 style: const TextStyle(
                   fontSize: 12, // Slightly bigger
                   color: Colors.white,
