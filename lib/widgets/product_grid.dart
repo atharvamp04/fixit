@@ -63,8 +63,8 @@ class _ProductCardState extends State<ProductCard> {
   Future<void> _sendNotificationToManager() async {
     final product = widget.product;
     String productName = product['Product Description'] ?? 'N/A';
-    int stock = product['Quantity On Hand'] ?? 0;
-    String managerEmail = "2022.atharva.phadtare@ves.ac.in"; // Get the manager's email
+    int stock = ((product['Quantity On Hand'] ?? 0) as num).toInt(); // ✅ Fixed type casting
+    String managerEmail = "mohite0404@gmail.com";
 
     String? managerId = await _fetchManagerId(managerEmail);
     if (managerId == null) {
@@ -100,7 +100,7 @@ class _ProductCardState extends State<ProductCard> {
         'id': const Uuid().v4(),
         'message': "Stock Alert: $productName - Only $stock left!",
         'created_at': DateTime.now().toIso8601String(),
-        'manager_id': managerId, // Ensure this ID exists in profile
+        'manager_id': managerId,
         'is_read': false,
       });
 

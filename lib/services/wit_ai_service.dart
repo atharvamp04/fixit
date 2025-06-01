@@ -265,7 +265,7 @@ class WitAIService {
         return {
           "type": "text",
           "message":
-          "❌ Sorry, no product found with code **$productCode**."
+          "**$productCode** is not available in store, raise AWP!"
         };
       }
     } catch (e) {

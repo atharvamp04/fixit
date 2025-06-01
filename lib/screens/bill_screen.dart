@@ -6,6 +6,9 @@ import 'pdf_generator.dart';
 import 'package:fixit/services/bill_email_service.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../widgets/bill_summary_bottom_sheet.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+
 
 import 'package:easy_localization/easy_localization.dart';
 
@@ -14,7 +17,9 @@ class BillScreen extends StatefulWidget {
   _BillScreenState createState() => _BillScreenState();
 }
 
-class _BillScreenState extends State<BillScreen> {
+class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   final _formKey = GlobalKey<FormState>();
 
   // Invoice Number will be auto-generated and not editable.
@@ -56,24 +61,47 @@ class _BillScreenState extends State<BillScreen> {
   void initState() {
     super.initState();
     fetchProducts();
-    _populateInvoiceNumber();
+    _loadFormFromLocalStorage();
+
+    userNameController.addListener(_saveFormToLocalStorage);
+    serialNumberController.addListener(_saveFormToLocalStorage);
+    serviceChargeController.addListener(_saveFormToLocalStorage);
+    customerEmailController.addListener(_saveFormToLocalStorage);
   }
 
-  Future<void> _populateInvoiceNumber() async {
-    final dynamic result = await supabase.rpc('generate_invoice_number');
-    String base;
-    if (result is String) {
-      base = result;
-    } else if (result is Map<String, dynamic> && result.containsKey('data')) {
-      base = result['data'] as String;
-    } else {
-      base = "ES/25-26/001";
-    }
-    setState(() {
-      _baseInvoice = base;
-      _rebuildInvoice();
-    });
+  @override
+  void dispose() {
+    userNameController.removeListener(_saveFormToLocalStorage);
+    serialNumberController.removeListener(_saveFormToLocalStorage);
+    serviceChargeController.removeListener(_saveFormToLocalStorage);
+    customerEmailController.removeListener(_saveFormToLocalStorage);
+
+    userNameController.dispose();
+    serialNumberController.dispose();
+    serviceChargeController.dispose();
+    customerEmailController.dispose();
+
+    super.dispose();
   }
+
+
+
+
+  // Future<void> _populateInvoiceNumber() async {
+  //   final dynamic result = await supabase.rpc('generate_invoice_number');
+  //   String base;
+  //   if (result is String) {
+  //     base = result;
+  //   } else if (result is Map<String, dynamic> && result.containsKey('data')) {
+  //     base = result['data'] as String;
+  //   } else {
+  //     base = "ES/25-26/001";
+  //   }
+  //   setState(() {
+  //     _baseInvoice = base;
+  //     _rebuildInvoice();
+  //   });
+  // }
 
   /// Combine base + prefix → full invoice
   void _rebuildInvoice() {
@@ -109,20 +137,25 @@ class _BillScreenState extends State<BillScreen> {
     }
   }
 
+  void onBrandChanged(String? brand) {
+    setState(() {
+      selectedBrand = brand;
+    });
+    _saveFormToLocalStorage();
+  }
   void addProductToList(Map<String, dynamic> product) {
     setState(() {
-      // If the product is already added, you might want to increase its quantity.
-      final existing = selectedProducts.firstWhere(
-            (p) => p['product_code'] == product['product_code'],
-        orElse: () => {},
-      );
-      if (existing.isNotEmpty) {
-        existing['quantity'] = (existing['quantity'] ?? 1) + 1;
+      int index = selectedProducts.indexWhere((p) => p['product_code'] == product['product_code']);
+      if (index != -1) {
+        selectedProducts[index]['quantity'] = (selectedProducts[index]['quantity'] ?? 1) + 1;
       } else {
         selectedProducts.add(Map<String, dynamic>.from(product));
       }
     });
+    _saveFormToLocalStorage();
   }
+
+
 
   /// Get the next unique invoice number via an RPC call.
   Future<String> getNextInvoiceNumber() async {
@@ -165,6 +198,13 @@ class _BillScreenState extends State<BillScreen> {
 
     setState(() {
       isLoading = true;
+    });
+
+    // Fetch fresh invoice number from RPC to avoid duplicates.
+    String freshBaseInvoice = await getNextInvoiceNumber();
+    setState(() {
+      _baseInvoice = freshBaseInvoice;
+      _rebuildInvoice();  // This updates invoiceNumberController.text
     });
 
     String invoiceNumber = invoiceNumberController.text;
@@ -234,7 +274,79 @@ class _BillScreenState extends State<BillScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Invoice generated, order updated, and email sent.")),
     );
+
+    await clearAllData();
   }
+
+  final String _formCacheKey = 'bill_form_cache';
+
+// Make this async since you're using await inside
+  Future<void> _saveFormToLocalStorage() async {
+    final formData = {
+      'userName': userNameController.text,
+      'serialNumber': serialNumberController.text,
+      'serviceCharge': serviceChargeController.text,
+      'customerEmail': customerEmailController.text,
+      'selectedBrand': selectedBrand,
+      'selectedProducts': selectedProducts,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    };
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_formCacheKey, jsonEncode(formData));
+  }
+
+// Also make this async
+  Future<void> _loadFormFromLocalStorage() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? cachedData = prefs.getString(_formCacheKey);
+
+    if (cachedData == null) return;
+
+    final Map<String, dynamic> formData = jsonDecode(cachedData);
+    final int savedTime = formData['timestamp'] ?? 0;
+    final int now = DateTime.now().millisecondsSinceEpoch;
+
+    // If older than 10 minutes, ignore
+    if (now - savedTime > 10 * 60 * 1000) {
+      await prefs.remove(_formCacheKey);
+      return;
+    }
+
+    // Load values into controllers and variables
+    userNameController.text = formData['userName'] ?? '';
+    serialNumberController.text = formData['serialNumber'] ?? '';
+    serviceChargeController.text = formData['serviceCharge'] ?? '0';
+    customerEmailController.text = formData['customerEmail'] ?? '';
+    selectedBrand = formData['selectedBrand'];
+    selectedProducts = List<Map<String, dynamic>>.from(formData['selectedProducts'] ?? []);
+  }
+
+
+  Future<void> clearAllData() async {
+    setState(() {
+      userNameController.clear();
+      serialNumberController.clear();
+      serviceChargeController.text = "0";
+      customerEmailController.clear();
+
+      selectedBrand = null;
+      selectedProductCode = null;
+      selectedProducts.clear();
+
+      technicianConsent = false;
+      generatedPdfBytes = null;
+
+      invoiceNumberController.clear();
+      _baseInvoice = "";
+      _warrantyType = "OW";
+    });
+
+    // Clear from local storage as well
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+  }
+
 
   /// Allows the technician to share/download the generated PDF.
   void handleSharePdf() {
@@ -259,7 +371,6 @@ class _BillScreenState extends State<BillScreen> {
       );
     }
   }
-
 
   void showBillSummaryBottomSheet(
       BuildContext context,
@@ -313,6 +424,7 @@ class _BillScreenState extends State<BillScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFFEFE516),
@@ -354,14 +466,7 @@ class _BillScreenState extends State<BillScreen> {
                     'bill_form.fill_details'.tr(), // Use translation key
                     style: const TextStyle(fontSize: 16),
                   ),
-                  const SizedBox(height: 10),
-                  _buildStyledField(
-                    'bill_form.invoice_number'.tr(), // Use translation key
-                    Icons.confirmation_number,
-                    invoiceNumberController,
-                    readOnly: true,
-                    enabled: false,
-                  ),
+
                   SizedBox(height: 16),
                   // — Warranty Type —
                   Text("bill_form.warranty_type".tr()),
@@ -419,7 +524,8 @@ class _BillScreenState extends State<BillScreen> {
                     child: ElevatedButton(
                       onPressed: isLoading
                           ? null
-                          : () {
+                          : () async {
+                        // Calculate subtotal
                         double subTotal = selectedProducts.fold(0.0, (sum, product) {
                           final String cleanedPrice = product['customer_price']
                               .toString()
@@ -429,6 +535,7 @@ class _BillScreenState extends State<BillScreen> {
                           return sum + (price * quantity);
                         });
 
+                        // Show the summary bottom sheet
                         showBillSummaryBottomSheet(
                           context,
                           subTotal,
@@ -441,6 +548,14 @@ class _BillScreenState extends State<BillScreen> {
                             });
                           },
                         );
+
+                        // Wait for invoice generation to finish (if handleGenerateInvoice is async)
+                        // If you want to wait for handleGenerateInvoice here,
+                        // you may need to refactor showBillSummaryBottomSheet to return Future.
+
+                        // After generating invoice, clear all data
+                        // If you want to clear immediately after showing summary, uncomment below:
+                        // await clearAllData();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFEFE516),
@@ -460,6 +575,7 @@ class _BillScreenState extends State<BillScreen> {
                         style: const TextStyle(color: Colors.white, fontSize: 16),
                       ),
                     ),
+
                   ),
                 ],
               ),
