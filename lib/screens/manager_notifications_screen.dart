@@ -297,6 +297,14 @@ class _ManagerNotificationsScreenState
                               '✅ Your request for "$productName" has been accepted and couriered.',
                             );
 
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Request accepted and confirmation slip sent to $requestedBy.'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+
+
                             _markAsRead(notification['id']);
                           },
                           icon: const Icon(Icons.check_circle,
@@ -330,6 +338,12 @@ class _ManagerNotificationsScreenState
                               recipientId: requesterId,
                               message:
                               '❌ Your request for "$productName" has been rejected by the manager.',
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Request rejected and email sent to $requestedBy.'),
+                                backgroundColor: Colors.red,
+                              ),
                             );
 
                             _markAsRead(notification['id']);
