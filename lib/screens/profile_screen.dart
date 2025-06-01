@@ -333,7 +333,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: InputDecoration(
         labelText: label,
         hintText: "${tr('enter')} $label",
-        prefixIcon: Icon(icon, color: const Color(0xFFEFE516)),
+        prefixIcon: Icon(icon, color: Colors.yellow[600]),
         focusedBorder: const UnderlineInputBorder(
           borderSide: BorderSide(color: Color(0xFFEFE516)),
         ),

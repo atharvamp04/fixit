@@ -414,7 +414,7 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
       decoration: InputDecoration(
         labelText: label,
         hintText: 'Enter $label',
-        suffixIcon: Icon(icon, color: const Color(0xFFEFE516)),
+        suffixIcon: Icon(icon, color: Colors.yellow[600]),
         focusedBorder: const UnderlineInputBorder(
           borderSide: BorderSide(color: Color(0xFFEFE516)),
         ),
@@ -427,7 +427,7 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
     super.build(context);
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFFEFE516),
+        backgroundColor: Colors.yellow[600],
         title: Text(
           'bill_form.title'.tr(),
           style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white),
@@ -558,7 +558,7 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
                         // await clearAllData();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFEFE516),
+                        backgroundColor: Colors.yellow[600],
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30.0),

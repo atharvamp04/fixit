@@ -154,7 +154,7 @@ class _LoginPageState extends State<LoginPage> {
                   hintText: 'enter_email'.tr(),
                   suffixIcon: Icon(
                     Icons.email,
-                    color: _emailFocusNode.hasFocus ? const Color(0xFFEFE516) : Colors.grey,
+                    color: _emailFocusNode.hasFocus ? Colors.yellow[600] : Colors.grey,
                   ),
                   focusedBorder: const UnderlineInputBorder(
                     borderSide: BorderSide(color: Color(0xFFEFE516)),
