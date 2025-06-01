@@ -194,7 +194,7 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
             ] else if (selectedOption == 'upi') ...[
               ElevatedButton.icon(
                 icon: const Icon(Icons.camera_alt_outlined),
-                label: const Text("Click UPI Payment Screenshot",),
+                label: const Text("Click UPI Payment Screenshot.   ",),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
                   elevation: 6,
@@ -216,6 +216,18 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
                     child: Image.file(upiScreenshot!, height: 220),
                   ),
                 ),
+              // Always show the UPI QR code below (regardless of whether a screenshot exists):
+              const SizedBox(height: 28),
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.asset(
+                    'assets/qr_code.png',
+                    height: 200,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
             ],
 
             const Spacer(),
