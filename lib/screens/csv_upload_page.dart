@@ -100,55 +100,85 @@ class _CsvUploadPageState extends State<CsvUploadPage> {
   }
 
   List<Map<String, dynamic>> processPriceCSV(String csvContent) {
-    final csvTable = CsvToListConverter(
-      eol: '\n',
+    // Use Djikstra’s “CsvToListConverter” with explicit CRLF support and textDelimiter = '"'.
+    // That way, fields like "2,499" (with a comma) are kept together.
+    final converter = CsvToListConverter(
+      eol: '\r\n',
+      fieldDelimiter: ',',
+      textDelimiter: '"',
       shouldParseNumbers: false,
-    ).convert(csvContent);
+    );
+
+    final csvTable = converter.convert(csvContent);
 
     if (csvTable.isEmpty) return [];
 
+    // Treat the first row as headers (trim whitespace).
     final headers = csvTable.first.map((e) => e.toString().trim()).toList();
-    final data = <Map<String, dynamic>>[];
 
+    final data = <Map<String, dynamic>>[];
+    // Starting from row #1 (i = 1), because row #0 is the header row.
     for (var i = 1; i < csvTable.length; i++) {
       final rowValues = csvTable[i];
+
+      // If the entire row is empty/blank, skip it.
+      final allBlank = rowValues.every((cell) {
+        final s = cell.toString().trim();
+        return s.isEmpty;
+      });
+      if (allBlank) continue;
+
+      // If the number of columns does not match the header count, skip it.
       if (rowValues.length != headers.length) continue;
 
       final row = <String, dynamic>{};
       for (var j = 0; j < headers.length; j++) {
-        String key = headers[j];
+        final rawKey = headers[j];
+        final rawVal = rowValues[j].toString().trim();
 
-        // Rename "ASP Price" to "asp_price" to match Supabase column name
-        if (key == "ASP Price") {
-          key = "asp_price";
-        }
+        switch (rawKey) {
+          case "Active (Product)":
+          // Some CSVs encode boolean as "TRUE"/"FALSE" (case-insensitive) or "1"/"0".
+            final lower = rawVal.toLowerCase();
+            row['active'] = (lower == 'true' || lower == '1');
+            break;
 
-        if (key == "Active (Product)") {
-          key = "active";
-        }
+          case "Product Name":
+            row['product_name'] = rawVal;
+            break;
 
-        // Optional: Rename other keys as per your Supabase table column names
-        if (key == "Customer Price") {
-          key = "customer_price";
-        }
-        if (key == "Product Code") {
-          key = "product_code";
-        }
-        if (key == "Product Name") {
-          key = "product_name";
-        }
-        if (key == "Product Description") {
-          key = "product_description";
-        }
+          case "Product Code":
+            row['product_code'] = rawVal;
+            break;
 
-        row[key] = rowValues[j].toString().trim();
+          case "Product Description":
+            row['product_description'] = rawVal;
+            break;
+
+          case "Customer Price":
+            row['customer_price'] = rawVal;
+            break;
+
+          case "ASP Price":
+            row['asp_price'] = rawVal;
+            break;
+
+          default:
+          // We ignore any other columns.
+            break;
+        }
       }
 
-      // You can set a default `active` column if needed
-      row['active'] = true;
+      // If “Active (Product)” was missing or unparsable, default it to false:
+      if (!row.containsKey('active')) {
+        row['active'] = false;
+      }
 
       data.add(row);
     }
+
+    // For debugging, you can print how many rows were parsed:
+    // print("processPriceCSV → parsed ${data.length} valid row(s).");
 
     return data;
   }
@@ -245,10 +275,14 @@ class _CsvUploadPageState extends State<CsvUploadPage> {
       if (csvString == null) throw 'No file selected';
 
       final parsedData = processPriceCSV(csvString);
+
+      // Debug print to double-check row count:
+      debugPrint("Uploading ${parsedData.length} rows to 'atomberg'…");
+
       await uploadToSupabase('atomberg', parsedData);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Atomberg Price Data uploaded successfully")),
+        const SnackBar(content: Text("Atomberg Price Data uploaded successfully")),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -260,6 +294,7 @@ class _CsvUploadPageState extends State<CsvUploadPage> {
       });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
