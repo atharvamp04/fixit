@@ -132,13 +132,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 child: Icon(Icons.chat, color: Colors.white),
               ),
               title: Text(
-                "${"chat".tr()} ${index + 1}",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              subtitle: Text(
                 sessions[index]["firstQuery"] ?? "No messages",
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              subtitle: Text(
+                "${"chat".tr()} ${index + 1}",
+
               ),
               trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey),
               onTap: () => _openSession(sessions[index]["sessionId"]!),
@@ -149,3 +150,5 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 }
+
+
