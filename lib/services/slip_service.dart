@@ -11,12 +11,12 @@ class MailService {
     required Uint8List pdfBytes,
   }) async {
     final smtpServer = gmail(
-      'atharvamp04@gmail.com',
-      'xlhu dydw iofd tpkc', // Use Gmail App Password
+      'electrolytesolninvoice@gmail.com',
+      'levz csbw hyfw rudl', // Use Gmail App Password
     );
 
     final message = Message()
-      ..from = Address('atharvamp04@gmail.com', 'fixit Courier')
+      ..from = Address('electrolytesolninvoice@gmail.com', 'fixit Courier')
       ..recipients.add(recipientEmail)
       ..subject = 'Courier Confirmation Slip for $productName'
       ..text = 'Hi $recipientName,\n\nYour product "$productName" has been couriered.'
@@ -43,8 +43,8 @@ class MailService {
     required String productName,
   }) async {
     final smtpServer = gmail(
-      'atharvamp04@gmail.com',
-      'xlhu dydw iofd tpkc', // Use Gmail App Password
+      'electrolytesolninvoice@gmail.com',
+      'levz csbw hyfw rudl', // Use Gmail App Password
     );
 
     final subject = 'Product Courier Request Rejected';
@@ -60,7 +60,7 @@ The fixit Team
     ''';
 
     final message = Message()
-      ..from = Address('atharvamp04@gmail.com', 'fixit Courier')
+      ..from = Address('electrolytesolninvoice@gmail.com', 'fixit Courier')
       ..recipients.add(recipientEmail)
       ..subject = subject
       ..text = body;

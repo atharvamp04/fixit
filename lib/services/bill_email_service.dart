@@ -30,8 +30,8 @@ class MemoryAttachment extends Attachment {
 
 class BillEmailService {
   // Hardcoded credentials for demonstration (replace with secure values in production).
-  final String username = 'atharvamp04@gmail.com'; // Replace with your email
-  final String password = 'xlhu dydw iofd tpkc'; // Replace with your App Password
+  final String username = 'electrolytesolninvoice@gmail.com'; // Replace with your email
+  final String password = 'levz csbw hyfw rudl'; // Replace with your App Password
 
   BillEmailService();
 

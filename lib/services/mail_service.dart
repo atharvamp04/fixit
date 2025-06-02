@@ -6,8 +6,8 @@ class MailService {
   final SupabaseClient supabase = Supabase.instance.client;
 
   // ⚠️ Do not hardcode credentials in production
-  final String username = 'atharvamp04@gmail.com';
-  final String password = 'xlhu dydw iofd tpkc'; // App password
+  final String username = 'electrolytesolninvoice@gmail.com';
+  final String password = 'levz csbw hyfw rudl'; // App password
 
   Future<void> sendStockRequestEmail({
     required String managerEmail,

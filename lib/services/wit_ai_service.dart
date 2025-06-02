@@ -192,7 +192,7 @@ class WitAIService {
         return {
           "type": "text",
           "message":
-          "❌ Sorry, no product found matching the description **$queryPart**."
+          "**$queryPart** is not available in store, raise AWP! or contact store manager"
         };
       }
     } catch (e) {
