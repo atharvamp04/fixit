@@ -132,133 +132,143 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
         elevation: 4,
         shadowColor: Colors.yellow.shade600,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("Select Payment Method",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 14),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Select Payment Method",
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 14),
 
-            // Cash Option
-            Card(
-              elevation: 3,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: RadioListTile<String>(
-                title: const Text("Cash",
-                    style: TextStyle(fontWeight: FontWeight.w600)),
-                value: 'cash',
-                groupValue: selectedOption,
-                activeColor: primaryColor,
-                onChanged: (val) => setState(() => selectedOption = val!),
+                    // Cash Option
+                    Card(
+                      elevation: 3,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: RadioListTile<String>(
+                        title: const Text("Cash",
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                        value: 'cash',
+                        groupValue: selectedOption,
+                        activeColor: primaryColor,
+                        onChanged: (val) => setState(() => selectedOption = val!),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // UPI Option
+                    Card(
+                      elevation: 3,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: RadioListTile<String>(
+                        title: const Text("UPI",
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                        value: 'upi',
+                        groupValue: selectedOption,
+                        activeColor: primaryColor,
+                        onChanged: (val) => setState(() => selectedOption = val!),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    if (selectedOption == 'cash') ...[
+                      TextField(
+                        controller: cashController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: "Enter cash amount collected",
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: primaryColor, width: 2),
+                          ),
+                        ),
+                      ),
+                    ] else if (selectedOption == 'upi') ...[
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.camera_alt_outlined),
+                        label: const Text("Click UPI Payment Screenshot."),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          elevation: 6,
+                          shadowColor: Colors.yellow.shade600,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          textStyle: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                        onPressed: _pickImageFromCamera,
+                      ),
+                      if (upiScreenshot != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.file(upiScreenshot!, height: 220),
+                          ),
+                        ),
+                      const SizedBox(height: 28),
+                      Center(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.asset(
+                            'assets/qr_code.png',
+                            height: 200,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ],
+
+                    const Spacer(),
+
+                    Container(
+                      margin: const EdgeInsets.only(top: 20),
+                      decoration: BoxDecoration(
+                        boxShadow: buttonShadow,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: ElevatedButton(
+                        onPressed: _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18)),
+                          elevation: 10,
+                          shadowColor: Colors.yellow.shade600,
+                          textStyle: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        child: const Center(
+                          child: Text("Submit Payment",
+                              style: TextStyle(color: Colors.white)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-
-            const SizedBox(height: 10),
-
-            // UPI Option
-            Card(
-              elevation: 3,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: RadioListTile<String>(
-                title: const Text("UPI",
-                    style: TextStyle(fontWeight: FontWeight.w600)),
-                value: 'upi',
-                groupValue: selectedOption,
-                activeColor: primaryColor,
-                onChanged: (val) => setState(() => selectedOption = val!),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            if (selectedOption == 'cash') ...[
-              TextField(
-                controller: cashController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: "Enter cash amount collected",
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: primaryColor, width: 2),
-                  ),
-                ),
-              ),
-            ] else if (selectedOption == 'upi') ...[
-              ElevatedButton.icon(
-                icon: const Icon(Icons.camera_alt_outlined),
-                label: const Text("Click UPI Payment Screenshot.   ",),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  elevation: 6,
-                  shadowColor: Colors.yellow.shade600,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  textStyle:
-                  const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                ),
-                onPressed: _pickImageFromCamera,
-              ),
-              if (upiScreenshot != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Image.file(upiScreenshot!, height: 220),
-                  ),
-                ),
-              // Always show the UPI QR code below (regardless of whether a screenshot exists):
-              const SizedBox(height: 28),
-              Center(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Image.asset(
-                    'assets/qr_code.png',
-                    height: 200,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-            ],
-
-            const Spacer(),
-
-            Container(
-              decoration: BoxDecoration(
-                boxShadow: buttonShadow,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: ElevatedButton(
-                onPressed: _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18)),
-                  elevation: 10,
-                  shadowColor: Colors.yellow.shade600,
-                  textStyle: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                child: const Center(
-                  child: Text("Submit Payment",
-                      style: TextStyle(color: Colors.white)),
-                ),
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
+
   }
 }
 
