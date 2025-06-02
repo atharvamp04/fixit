@@ -125,27 +125,46 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
 
 
   Future<void> fetchProducts() async {
-    final response = await supabase
-        .from('atomberg')
-        .select('product_name, product_code, product_description, customer_price')
-        .eq('active', true);
-    if (response != null && response is List) {
-      setState(() {
-        productList = response.map<Map<String, dynamic>>((product) {
-          // Set a default quantity of 1 if not already specified.
-          return {
-            'product_name': product['product_name'],
-            'product_code': product['product_code'],
-            'product_description': product['product_description'] ?? 'No description available',
-            'customer_price': product['customer_price'].toString(),
-            'quantity': 1,
-          };
-        }).toList();
-      });
-    } else {
-      print("Error fetching products.");
+    List<Map<String, dynamic>> allProducts = [];
+    int batchSize = 1000;
+    int start = 0;
+
+    while (true) {
+      final response = await supabase
+          .from('atomberg')
+          .select('product_name, product_code, product_description, customer_price')
+          .eq('active', true)
+          .range(start, start + batchSize - 1);
+
+      // Check if response is a valid List
+      if (response == null || response is! List || response.isEmpty) {
+        break;
+      }
+
+      // Map the batch into desired structure
+      final batch = response.map<Map<String, dynamic>>((product) {
+        return {
+          'product_name': product['product_name'],
+          'product_code': product['product_code'],
+          'product_description': product['product_description'] ?? 'No description available',
+          'customer_price': product['customer_price'].toString(),
+          'quantity': 1,
+        };
+      }).toList();
+
+      allProducts.addAll(batch);
+
+      // Stop if batch returned fewer than requested — end of data
+      if (batch.length < batchSize) break;
+
+      start += batchSize;
     }
+
+    setState(() {
+      productList = allProducts;
+    });
   }
+
 
   void onBrandChanged(String? brand) {
     setState(() {
