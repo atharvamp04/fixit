@@ -45,7 +45,7 @@ dev_dependencies:
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/electrolyte_logo.jpeg"
+  image_path: "assets/AppLogo.png"
   min_sdk_android: 21 # Android min SDK version
   web:
     generate: true
@@ -71,6 +71,7 @@ flutter:
     - assets/electrolyte_logo.jpeg
     - assets/qr_code.png
     - assets/stamp.png
+    - assets/AppLogo.png
     - assets/applogo_removebg.jpeg
     - assets/fonts/Roboto-Regular.ttf
     - assets/fonts/OpenSans-Regular.ttf
