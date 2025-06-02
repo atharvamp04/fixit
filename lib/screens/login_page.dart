@@ -62,8 +62,8 @@ class _LoginPageState extends State<LoginPage> {
       _isLoading = true;
     });
 
-    const String webClientId = '420646018313-4iql2ugkb2s080g1cgbansvugmqnql1k.apps.googleusercontent.com';
-    const String iosClientId = '420646018313-onbp2q23jm6f7j26ipp2nl1sgeassoki.apps.googleusercontent.com';
+    const String webClientId = '234884132412-531t90e8tr3slbu1g8kp2ifjg40p03df.apps.googleusercontent.com';
+    const String iosClientId = '234884132412-4e7ceomed36j9l2s6oht52dfafpjvfvc.apps.googleusercontent.com';
 
     final GoogleSignIn googleSignIn = GoogleSignIn(
       clientId: iosClientId,

@@ -122,9 +122,9 @@ class _SignupPageState extends State<SignupPage> {
   /// If no profile exists, create one with approved = false, then sign out.
   Future<void> _nativeGoogleSignIn() async {
     const webClientId =
-        '420646018313-4iql2ugkb2s080g1cgbansvugmqnql1k.apps.googleusercontent.com';
+        '234884132412-531t90e8tr3slbu1g8kp2ifjg40p03df.apps.googleusercontent.com';
     const iosClientId =
-        '420646018313-onbp2q23jm6f7j26ipp2nl1sgeassoki.apps.googleusercontent.com';
+        '234884132412-4e7ceomed36j9l2s6oht52dfafpjvfvc.apps.googleusercontent.com';
 
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
