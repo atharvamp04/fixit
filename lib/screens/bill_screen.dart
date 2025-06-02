@@ -8,6 +8,8 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../widgets/bill_summary_bottom_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'dart:async';
+
 
 
 import 'package:easy_localization/easy_localization.dart';
@@ -275,7 +277,6 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
       const SnackBar(content: Text("Invoice generated, order updated, and email sent.")),
     );
 
-    await clearAllData();
   }
 
   final String _formCacheKey = 'bill_form_cache';
@@ -349,28 +350,67 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
 
 
   /// Allows the technician to share/download the generated PDF.
-  void handleSharePdf() {
-    // Double‐guard: ensure generatedPdfBytes is neither null nor empty.
+  void handleSharePdf() async {
     if (generatedPdfBytes != null && generatedPdfBytes!.isNotEmpty) {
-      try {
-        Printing.sharePdf(
-          bytes: generatedPdfBytes!,
-          filename:
-          "${invoiceNumberController.text}_${customerEmailController.text}.pdf",
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('error_sharing_pdf'.tr(args: [e.toString()])),
-          ),
-        );
+      bool? shareConfirmed;
+
+      // Start a timer to clear data automatically after 10 seconds
+      Timer clearTimer = Timer(Duration(seconds: 10), () async {
+        await clearAllData();
+      });
+
+      shareConfirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Share PDF?'),
+          content: Text('Do you want to share the generated PDF?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('No'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Yes'),
+            ),
+          ],
+        ),
+      );
+
+      // If user responded before timer runs
+      if (clearTimer.isActive) {
+        clearTimer.cancel(); // Cancel the timer to avoid double clear
+        if (shareConfirmed == true) {
+          try {
+            String invoice = invoiceNumberController.text.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+            String email = customerEmailController.text.replaceAll(RegExp(r'[^a-zA-Z0-9@.]'), '_');
+            String filename = "${invoice}_$email.pdf";
+
+            await Printing.sharePdf(
+              bytes: generatedPdfBytes!,
+              filename: filename,
+            );
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('error_sharing_pdf'.tr(args: [e.toString()])),
+              ),
+            );
+          }
+        }
+
+        await clearAllData();
       }
+
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('generate_invoice_first'.tr())),
       );
     }
   }
+
+
+
 
   void showBillSummaryBottomSheet(
       BuildContext context,
