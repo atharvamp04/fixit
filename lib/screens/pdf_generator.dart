@@ -15,6 +15,8 @@ Future<Uint8List> generatePdf({
   required String brand,
   required double serviceCharge,
   required List<Map<String, dynamic>> selectedProducts,
+  required String preparedBy,
+  required String caseId,
 }) async {
   // Load a custom font (e.g., Roboto-Regular) that supports Unicode.
   // Replace the old Roboto load with OpenSans variants:
@@ -138,7 +140,15 @@ Future<Uint8List> generatePdf({
                               pw.Text("BILL DATE: ${DateTime.now().toString().split(' ')[0]}"),
                             ],
                           ),
-                          pw.Text("FOR: Atomberg Products Service"),
+                          pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.end,
+                            children: [
+                              pw.Text("Prepared By: $preparedBy"),
+                              pw.Text("Case ID: $caseId"),
+                              pw.SizedBox(height: 6), // small spacing before “FOR:…”
+                              pw.Text("FOR: Atomberg Products Service"),
+                            ],
+                          ),
                         ],
                       ),
                     ),

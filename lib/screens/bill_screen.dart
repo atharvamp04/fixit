@@ -30,6 +30,8 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
   final TextEditingController serialNumberController = TextEditingController();
   final TextEditingController serviceChargeController = TextEditingController(text: "0");
   final TextEditingController customerEmailController = TextEditingController();
+  final TextEditingController preparedByController = TextEditingController();
+  final TextEditingController caseIdController      = TextEditingController();
 
   String? selectedProductCode;
   List<Map<String, dynamic>> productList = [];
@@ -69,6 +71,8 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
     serialNumberController.addListener(_saveFormToLocalStorage);
     serviceChargeController.addListener(_saveFormToLocalStorage);
     customerEmailController.addListener(_saveFormToLocalStorage);
+    preparedByController.addListener(_saveFormToLocalStorage);
+    caseIdController.addListener(_saveFormToLocalStorage);
   }
 
   @override
@@ -77,11 +81,15 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
     serialNumberController.removeListener(_saveFormToLocalStorage);
     serviceChargeController.removeListener(_saveFormToLocalStorage);
     customerEmailController.removeListener(_saveFormToLocalStorage);
+    preparedByController.removeListener(_saveFormToLocalStorage);
+    caseIdController.removeListener(_saveFormToLocalStorage);
 
     userNameController.dispose();
     serialNumberController.dispose();
     serviceChargeController.dispose();
     customerEmailController.dispose();
+    preparedByController.dispose();
+    caseIdController.dispose();
 
     super.dispose();
   }
@@ -221,6 +229,8 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
       brand: selectedBrand!,
       serviceCharge: serviceCharge,
       selectedProducts: selectedProducts,
+      preparedBy: preparedByController.text,
+      caseId:    caseIdController.text,
     );
     setState(() {
       generatedPdfBytes = pdfBytes;
@@ -260,6 +270,8 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
       'final_amount': finalTotal,
       'invoice_copy': pdfUrl,
       'customer_email': customerEmailController.text,
+      'prepared_by':    preparedByController.text,
+      'case_id':        caseIdController.text,
     });
 
     // Send the invoice email with PDF attached.
@@ -290,6 +302,8 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
       'customerEmail': customerEmailController.text,
       'selectedBrand': selectedBrand,
       'selectedProducts': selectedProducts,
+      'preparedBy'     : preparedByController.text,
+      'caseId'         : caseIdController.text,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
     };
 
@@ -321,6 +335,8 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
     customerEmailController.text = formData['customerEmail'] ?? '';
     selectedBrand = formData['selectedBrand'];
     selectedProducts = List<Map<String, dynamic>>.from(formData['selectedProducts'] ?? []);
+    preparedByController.text    = formData['preparedBy'] ?? '';
+    caseIdController.text        = formData['caseId'] ?? '';
   }
 
 
@@ -551,6 +567,22 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
                     Icons.tag,
                     serialNumberController,
                   ),
+                  const SizedBox(height: 16),
+                  // ── NEW FIELDS BEGIN ──
+                  _buildStyledField(
+                    'bill_form.prepared_by'.tr(),    // You’ll need to add these keys to your .json translation files
+                    Icons.person_outline,
+                    preparedByController,
+                  ),
+                  const SizedBox(height: 16),
+
+                  _buildStyledField(
+                    'bill_form.case_id'.tr(),
+                    Icons.confirmation_number_outlined,
+                    caseIdController,
+                  ),
+// ── NEW FIELDS END ──
+
                   const SizedBox(height: 16),
                   _buildStyledField(
                     'bill_form.service_charge'.tr(), // Use translation key

@@ -65,7 +65,7 @@ class _ProductCardState extends State<ProductCard> {
     final product = widget.product;
     String productName = product['Product Description'] ?? 'N/A';
     int stock = ((product['Quantity On Hand'] ?? 0) as num).toInt();
-    String managerEmail = "electrolytesolninvoice@gmail.com";
+    String managerEmail = "mohite0404@gmail.com";
 
     String? managerId = await _fetchManagerId(managerEmail);
     if (managerId == null) {

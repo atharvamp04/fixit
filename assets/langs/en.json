@@ -66,7 +66,9 @@
     "serial_number": "Serial Number",
     "service_charge": "Service Charge",
     "view_summary": "View Summary",
-    "search_product_hint": "Enter product name or ID"
+    "search_product_hint": "Enter product name or ID",
+    "prepared_by" : "Prepared By",
+    "case_id"     : "Case ID"
   },
 
   "no_history": "No chat history available",
