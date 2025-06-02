@@ -152,12 +152,12 @@ class _ProductCardState extends State<ProductCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              SelectableText(
                 productName,
                 style: const TextStyle(
                     fontSize: 16, fontWeight: FontWeight.bold),
                 maxLines: 4,
-                overflow: TextOverflow.ellipsis,
+                //overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 8),
               Row(
@@ -200,7 +200,7 @@ class _ProductCardState extends State<ProductCard> {
                 const SizedBox(height: 8),
                 const Divider(),
                 const SizedBox(height: 8),
-                Text("Product Code: $productCode",
+                SelectableText("Product Code: $productCode",
                     style: const TextStyle(
                         fontSize: 14, color: Colors.black87)),
                 const SizedBox(height: 4),
