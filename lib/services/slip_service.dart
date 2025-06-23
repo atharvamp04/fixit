@@ -16,7 +16,7 @@ class MailService {
     );
 
     final message = Message()
-      ..from = Address('electrolytesolninvoice@gmail.com', 'fixit Courier')
+      ..from = Address('electrolytesolninvoice@gmail.com', 'Invexa Courier')
       ..recipients.add(recipientEmail)
       ..subject = 'Courier Confirmation Slip for $productName'
       ..text = 'Hi $recipientName,\n\nYour product "$productName" has been couriered.'
@@ -56,11 +56,11 @@ We regret to inform you that your product "$productName" courier request has bee
 Thank you for your understanding.
 
 Best regards,
-The fixit Team
+The Invexa Team
     ''';
 
     final message = Message()
-      ..from = Address('electrolytesolninvoice@gmail.com', 'fixit Courier')
+      ..from = Address('electrolytesolninvoice@gmail.com', 'Invexa Courier')
       ..recipients.add(recipientEmail)
       ..subject = subject
       ..text = body;

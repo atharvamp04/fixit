@@ -1,9 +1,9 @@
-# 🛠️ FixIt
+# 🛠️ Invexa
 
-FixIt is a **Flutter-based mobile app** that streamlines technician workflows, inventory management, PDF invoicing, multilingual communication, and real-time support via chatbot. It's built for service-based companies managing technicians and stock movement.
+Invexa is a **Flutter-based mobile app** that streamlines technician workflows, inventory management, PDF invoicing, multilingual communication, and real-time support via chatbot. It's built for service-based companies managing technicians and stock movement.
 
 <p align="center">
-  <a href="https://play.google.com/store/apps/details?id=com.yourcompany.fixit">
+  <a href="https://play.google.com/store/apps/details?id=com.yourcompany.Invexa">
     <img src="https://play.google.com/intl/en/badges/static/images/badges/en_badge_web_generic.png" height="80" alt="Get it on Google Play"/>
   </a>
 </p>
@@ -41,7 +41,7 @@ FixIt is a **Flutter-based mobile app** that streamlines technician workflows, i
 ---
 ## 🌍 Supported Languages
 
-FixIt supports the following 14 languages using `easy_localization`:
+Invexa supports the following 14 languages using `easy_localization`:
 
 - 🇬🇧 English (`en`)
 - 🇮🇳 Hindi (`hi`)
@@ -109,8 +109,8 @@ lib/
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/fixit.git
-cd fixit
+git clone https://github.com/your-username/Invexa.git
+cd Invexa
 
 # 2. Install Flutter packages
 flutter pub get

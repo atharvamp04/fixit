@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pdf_generator.dart';
-import 'package:fixit/services/bill_email_service.dart';
+import 'package:Invexa/services/bill_email_service.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../widgets/bill_summary_bottom_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:async';
+import 'invoice_history_page.dart';
 
 
 
@@ -202,16 +203,23 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
   /// Upload PDF bytes to Supabase Storage (bucket: 'invoices') and return its public URL.
   Future<String?> uploadInvoicePdf(Uint8List pdfBytes, String filename) async {
     try {
-      final String filePath = await supabase.storage
+      final String filePath = 'ES/25-26/$filename'; // ✅ Define proper folder path
+
+      await supabase.storage
+          .from('invoices') // ✅ Only 1 "invoices" — this is the bucket name
+          .uploadBinary(filePath, pdfBytes, fileOptions: const FileOptions(upsert: true));
+
+      final String publicUrl = supabase.storage
           .from('invoices')
-          .uploadBinary(filename, pdfBytes, fileOptions: const FileOptions(upsert: true));
-      final String publicUrl = supabase.storage.from('invoices').getPublicUrl(filePath);
+          .getPublicUrl(filePath); // ✅ Use same filePath here
+
       return publicUrl;
     } catch (e) {
       print("Error uploading PDF: $e");
       return null;
     }
   }
+
 
   /// Handles invoice generation, order insertion, PDF upload, emailing, and sharing.
   Future<void> handleGenerateInvoice() async {
@@ -278,6 +286,15 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
     });
     double finalTotal = subTotal + serviceCharge;
 
+    final user = Supabase.instance.client.auth.currentUser;
+
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("User not logged in.")),
+      );
+      return;
+    }
+
     final dynamic orderResponse = await supabase.from('orders').insert({
       'invoice_no': invoiceNumber,
       'brand': selectedBrand,
@@ -291,6 +308,7 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
       'customer_email': customerEmailController.text,
       'prepared_by':    preparedByController.text,
       'case_id':        caseIdController.text,
+      'user_id': user.id,
     });
 
     // Send the invoice email with PDF attached.
@@ -509,14 +527,23 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
         ),
         actions: [
           IconButton(
+            icon: Icon(Icons.history),
+            color: Colors.white,
+            tooltip: 'Invoice History',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => InvoiceHistoryPage()),
+              );
+            },
+          ),
+          IconButton(
             icon: Icon(
               Icons.share,
-              // Show gray when no PDF is ready; white when ready.
               color: generatedPdfBytes == null || generatedPdfBytes!.isEmpty
                   ? Colors.grey.shade400
                   : Colors.white,
             ),
-            // Disable the button entirely if generatedPdfBytes is null or empty.
             onPressed: (generatedPdfBytes == null || generatedPdfBytes!.isEmpty)
                 ? null
                 : handleSharePdf,
@@ -525,6 +552,7 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
                 : 'share_invoice'.tr(),
           )
         ],
+
 
       ),
       body: Stack(

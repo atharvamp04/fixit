@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import 'package:fixit/services/slip_service.dart';
+import 'package:Invexa/services/slip_service.dart';
 import 'csv_upload_page.dart';
 
 class ManagerNotificationsScreen extends StatefulWidget {
@@ -90,7 +90,7 @@ class _ManagerNotificationsScreenState
               children: [
                 pw.Center(
                   child: pw.Text(
-                    'fixit Courier Confirmation Slip',
+                    'Invexa Courier Confirmation Slip',
                     style: pw.TextStyle(
                       fontSize: 24,
                       fontWeight: pw.FontWeight.bold,
@@ -113,7 +113,7 @@ class _ManagerNotificationsScreenState
                 pw.Align(
                   alignment: pw.Alignment.bottomRight,
                   child: pw.Text(
-                    'Thank you for using fixit.',
+                    'Thank you for using Invexa.',
                     style: pw.TextStyle(
                       fontStyle: pw.FontStyle.italic,
                       fontSize: 12,

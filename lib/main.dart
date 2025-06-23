@@ -5,6 +5,8 @@ import 'screens/splash_screen.dart';
 import 'screens/home_page.dart';
 import 'screens/login_page.dart';
 import 'screens/signup_page.dart';
+import 'services/updater.dart';
+import 'dart:io';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +16,13 @@ void main() async {
     url: 'https://siwidxwgojsyyenzaena.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpd2lkeHdnb2pzeXllbnphZW5hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY2MTY2NzksImV4cCI6MjA1MjE5MjY3OX0.s1uzCefy3VJC2DfNPdBeWWqmOm46KGXDZE9nYBfH3hY',
   );
+
+  // ✅ Only check for updates on Windows platform
+  if (Platform.isWindows) {
+    await Updater(
+      versionUrl: 'https://siwidxwgojsyyenzaena.supabase.co/storage/v1/object/public/metadata//version.json',
+    ).checkForUpdate();
+  }
 
   runApp(
     EasyLocalization(
@@ -49,7 +58,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'fixit',
+      title: 'Invexa',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,

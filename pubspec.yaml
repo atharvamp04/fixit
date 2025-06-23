@@ -1,4 +1,4 @@
-name: fixit
+name: Invexa
 description: "A new Flutter project."
 publish_to: "none" # Prevent accidental publishing to pub.dev
 
@@ -35,7 +35,8 @@ dependencies:
   path_provider: ^2.0.14
   shared_preferences: ^2.2.2
   collection: ^1.19.0
-
+  dio: ^5.4.0
+  package_info_plus: ^4.2.0
 
 dev_dependencies:
   flutter_test:
@@ -49,16 +50,16 @@ flutter_icons:
   min_sdk_android: 21 # Android min SDK version
   web:
     generate: true
-    image_path: "assets/fixit.png"
+    image_path: "assets/Invexa.png"
     background_color: "#hexcode"
     theme_color: "#hexcode"
   windows:
     generate: true
-    image_path: "assets/fixit.png"
+    image_path: "assets/Invexa.png"
     icon_size: 48 # Min:48, Max:256, Default:48
   macos:
     generate: true
-    image_path: "assets/fixit.png"
+    image_path: "assets/Invexa.png"
   remove_alpha_ios: true
 
 flutter:

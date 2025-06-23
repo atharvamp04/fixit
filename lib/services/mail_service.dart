@@ -38,7 +38,7 @@ class MailService {
 
       final smtpServer = gmail(username, password);
       final message = Message()
-        ..from = Address(username, 'fixit Stock Manager')
+        ..from = Address(username, 'Invexa Stock Manager')
         ..recipients.add(managerEmail)
         ..subject = '🔔 Stock Request: $productName Needed'
         ..text = '''

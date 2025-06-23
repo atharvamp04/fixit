@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:fixit/services/auth_service.dart';
+import 'package:Invexa/services/auth_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class SignupPage extends StatefulWidget {
