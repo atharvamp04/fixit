@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:easy_localization/easy_localization.dart'; // Add Easy Localization import
+import '../widgets/drawer_appbar.dart';
+import '../widgets/drawer_top_appbar.dart';
+
 
 class UserNotificationsScreen extends StatefulWidget {
   @override
@@ -12,6 +15,8 @@ class UserNotificationsScreen extends StatefulWidget {
 class _UserNotificationsScreenState extends State<UserNotificationsScreen> {
   List<Map<String, dynamic>> _notifications = [];
   bool _isLoading = true;
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
 
   @override
   void initState() {
@@ -61,17 +66,20 @@ class _UserNotificationsScreenState extends State<UserNotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      key: scaffoldKey,
+      appBar: DrawerAppBar(
+        scaffoldKey: scaffoldKey,
+        backgroundColor: Colors.yellow[600] ?? Colors.yellow,
         title: Text(
-          tr('my_notifications'), // Use localized text here
-          style: TextStyle(
+          tr('my_notifications'),
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 30,
             fontWeight: FontWeight.w800,
           ),
         ),
-        backgroundColor: Colors.yellow[600],
       ),
+      drawer: const AppDrawer(),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
           : _notifications.isEmpty

@@ -10,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'invoice_history_page.dart';
+import '../widgets/drawer_appbar.dart';
+import '../widgets/drawer_top_appbar.dart';
 
 
 
@@ -24,6 +26,8 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
   @override
   bool get wantKeepAlive => true;
   final _formKey = GlobalKey<FormState>();
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
 
   // Invoice Number will be auto-generated and not editable.
   final TextEditingController invoiceNumberController = TextEditingController();
@@ -94,25 +98,7 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
 
     super.dispose();
   }
-
-
-
-
-  // Future<void> _populateInvoiceNumber() async {
-  //   final dynamic result = await supabase.rpc('generate_invoice_number');
-  //   String base;
-  //   if (result is String) {
-  //     base = result;
-  //   } else if (result is Map<String, dynamic> && result.containsKey('data')) {
-  //     base = result['data'] as String;
-  //   } else {
-  //     base = "ES/25-26/001";
-  //   }
-  //   setState(() {
-  //     _baseInvoice = base;
-  //     _rebuildInvoice();
-  //   });
-  // }
+  
 
   /// Combine base + prefix → full invoice
   void _rebuildInvoice() {
@@ -519,15 +505,22 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.yellow[600],
+      key: scaffoldKey,
+      appBar: DrawerAppBar(
+        key: scaffoldKey,
+        scaffoldKey: scaffoldKey,
+        backgroundColor: Colors.yellow[600] ?? Colors.yellow,
         title: Text(
           'bill_form.title'.tr(),
-          style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white),
+          style: const TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.history),
+            icon: const Icon(Icons.history),
             color: Colors.white,
             tooltip: 'Invoice History',
             onPressed: () {
@@ -540,7 +533,7 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
           IconButton(
             icon: Icon(
               Icons.share,
-              color: generatedPdfBytes == null || generatedPdfBytes!.isEmpty
+              color: (generatedPdfBytes == null || generatedPdfBytes!.isEmpty)
                   ? Colors.grey.shade400
                   : Colors.white,
             ),
@@ -550,11 +543,11 @@ class _BillScreenState extends State<BillScreen> with AutomaticKeepAliveClientMi
             tooltip: (generatedPdfBytes == null || generatedPdfBytes!.isEmpty)
                 ? 'generate_invoice_first'.tr()
                 : 'share_invoice'.tr(),
-          )
+          ),
         ],
-
-
       ),
+      drawer: const AppDrawer(),
+
       body: Stack(
         children: [
           SingleChildScrollView(

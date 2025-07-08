@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import './chat_screen.dart';
+import '../widgets/drawer_appbar.dart';
+import '../widgets/drawer_top_appbar.dart';
 
 class HistoryScreen extends StatefulWidget {
   @override
@@ -11,6 +13,8 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   List<Map<String, String>> sessions = [];
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
 
   @override
   void initState() {
@@ -99,20 +103,27 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.yellow[600],
+      key: scaffoldKey,
+      appBar: DrawerAppBar(
+        scaffoldKey: scaffoldKey,
+        backgroundColor: Colors.yellow[600] ?? Colors.yellow,
         title: Text(
           "history".tr(),
-          style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 30,
+            fontWeight: FontWeight.w800,
+          ),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.delete, color: Colors.white),
+            icon: const Icon(Icons.delete, color: Colors.white),
             onPressed: _clearAllSessions,
             tooltip: "delete".tr(),
           ),
         ],
       ),
+      drawer: const AppDrawer(),
       body: sessions.isEmpty
           ? Center(child: Text("no_history".tr()))
           : ListView.builder(

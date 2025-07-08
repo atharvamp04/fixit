@@ -107,6 +107,9 @@ class _HomePageState extends State<HomePage> {
     ];
   }
 
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -120,6 +123,69 @@ class _HomePageState extends State<HomePage> {
         return true;
       },
       child: Scaffold(
+          key: _scaffoldKey,
+        drawer: Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              const DrawerHeader(
+                decoration: BoxDecoration(
+                  color: Colors.yellow,
+                ),
+                child: Text(
+                  'Navigation',
+                  style: TextStyle(color: Colors.black, fontSize: 24),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.chat),
+                title: Text('chat'.tr()),
+                onTap: () {
+                  setState(() => _selectedIndex = 0);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.history),
+                title: Text('history'.tr()),
+                onTap: () {
+                  setState(() => _selectedIndex = 1);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.receipt),
+                title: Text('bill'.tr()),
+                onTap: () {
+                  setState(() => _selectedIndex = 2);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.account_circle),
+                title: Text('profile'.tr()),
+                onTap: () {
+                  setState(() => _selectedIndex = 3);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.notifications),
+                title: Text('alerts'.tr()),
+                onTap: () {
+                  setState(() => _selectedIndex = 4);
+                  Navigator.pop(context);
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('Logout'),
+                onTap: signOut,
+              ),
+            ],
+          ),
+        ),
         body: SafeArea(
           child: userRole == null
               ? const Center(child: CircularProgressIndicator())
@@ -137,4 +203,5 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
 }

@@ -5,7 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
+import '../widgets/drawer_appbar.dart';
+import '../widgets/drawer_top_appbar.dart';
 import '../services/wit_ai_service.dart';
 import '../widgets/product_grid.dart';
 import '../widgets/animated_chat_bubble.dart';
@@ -24,6 +25,8 @@ class _ChatScreenState extends State<ChatScreen> {
   final FocusNode _focusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
   final WitAIService _witAIService = WitAIService();
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
 
   List<Map<String, dynamic>> messages = [];
   bool isLoading = false;
@@ -223,10 +226,11 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final hintMessages = _getHintMessages();
-
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.yellow[600],
+      key: scaffoldKey,
+      appBar: DrawerAppBar(
+        backgroundColor: Colors.yellow[600] ?? const Color(0xFFFFEB3B),
+        scaffoldKey: scaffoldKey,
         title: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -243,7 +247,7 @@ class _ChatScreenState extends State<ChatScreen> {
               Text(
                 lastUpdateText,
                 style: const TextStyle(
-                  fontSize: 12, // Slightly bigger
+                  fontSize: 12,
                   color: Colors.white,
                   fontWeight: FontWeight.w500,
                 ),
@@ -257,6 +261,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
+      drawer: const AppDrawer(),
 
 
       body: Column(

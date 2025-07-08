@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:uuid/uuid.dart';
+import '../widgets/drawer_appbar.dart';
+import '../widgets/drawer_top_appbar.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -14,6 +16,8 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
 
   final _fullNameController = TextEditingController();
   final _mobileController = TextEditingController();
@@ -221,11 +225,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('profile'), style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white)),
-        backgroundColor: Colors.yellow[600],
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+      key: scaffoldKey,
+      appBar: DrawerAppBar(
+        scaffoldKey: scaffoldKey,
+        backgroundColor: Colors.yellow[600] ?? Colors.yellow,
+        title: Text(
+          tr('profile'),
+          style: const TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.language, color: Colors.white),
@@ -233,6 +244,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
+      drawer: const AppDrawer(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
