@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "446676922900",
+    "project_id": "invexa-512e3",
+    "storage_bucket": "invexa-512e3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:446676922900:android:d67e673e81d624ea43ed01",
+        "android_client_info": {
+          "package_name": "com.electrolytesoln.invexa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAPevkxkrDV8skmltHvJFib45MwAdsLVg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
